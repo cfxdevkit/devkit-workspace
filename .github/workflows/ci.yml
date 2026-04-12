@@ -80,7 +80,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Typecheck packages
-        run: pnpm -r --if-present --filter "./packages/**" typecheck
+        run: pnpm run ci:typecheck
 
   build:
     name: Build Workspace Packages
@@ -132,7 +132,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run tests
-        run: pnpm run test:all
+        run: pnpm run ci:test
 
   scaffold:
     name: Scaffold Normalization Parity

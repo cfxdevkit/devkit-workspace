@@ -30,8 +30,16 @@ export function run(runtime: Runtime, args: string[], inherit = true): number {
  * Run a command, surfacing output only on failure (unless verbose).
  */
 export function runVisible(runtime: Runtime, args: string[], verbose: boolean): number {
+  return runVisibleResult(runtime, args, verbose).status;
+}
+
+export function runVisibleResult(
+  runtime: Runtime,
+  args: string[],
+  verbose: boolean,
+): { status: number; stdout: string; stderr: string } {
   if (verbose) {
-    return run(runtime, args, true);
+    return { status: run(runtime, args, true), stdout: '', stderr: '' };
   }
 
   const result = spawnSync(runtime, args, {
@@ -44,14 +52,14 @@ export function runVisible(runtime: Runtime, args: string[], verbose: boolean): 
   }
 
   const status = result.status ?? 0;
+  const stdout = (result.stdout ?? '').trim();
+  const stderr = (result.stderr ?? '').trim();
   if (status !== 0) {
-    const stdout = (result.stdout ?? '').trim();
-    const stderr = (result.stderr ?? '').trim();
     if (stdout) console.error(stdout);
     if (stderr) console.error(stderr);
   }
 
-  return status;
+  return { status, stdout, stderr };
 }
 
 /**
