@@ -1,6 +1,6 @@
 {
   "name": "conflux-workspace",
-  "version": "0.1.0",
+  "version": "0.1.2",
   "description": "Manage and launch the CFX DevKit workspace container with per-workspace persistence profiles",
   "homepage": "https://github.com/cfxdevkit/devkit-workspace#readme",
   "bugs": {
