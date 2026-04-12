@@ -11,8 +11,9 @@
     "serve": "node dist-server/server.js"
   },
   "dependencies": {
-    "@tanstack/react-query": "^5.62.0",
     "@cfxdevkit/ui-shared": "workspace:*",
+    "@tanstack/react-query": "^5.62.0",
+    "cive": "^0.8.1",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "viem": "^2.23.0",

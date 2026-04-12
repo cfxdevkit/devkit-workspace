@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
 import { parseEther } from 'viem';
+import { recoverMessageAddress } from 'cive/utils';
 import { exampleCounterAbi, useReadExampleCounterValue } from '../generated/hooks';
 import { getContractAddress } from '../generated/contracts-addresses';
 import { getChainLabel } from '../chains';
 import { useAuth, } from '@cfxdevkit/ui-shared';
+import { getCoreChainConfigForEspaceChain, normalizeCoreAddressForChain, useCoreWallet } from '../hooks/useCoreWallet';
 import { useDevkitNetworkSync } from '../hooks/useDevkitNetwork';
 
 interface ContractEntry {
@@ -12,22 +14,93 @@ interface ContractEntry {
   address: string;
 }
 
+interface CoreApproval {
+  action: 'increment';
+  expiresAt: number;
+  message: string;
+  signature: `0x${string}`;
+  signer: string;
+}
+
+interface CoreAuthorizationDebugInfo {
+  contractAddress: string;
+  targetEspaceChainId: number;
+  targetCoreChainId: number;
+  expectedCoreSigner: string;
+  recoveredHexSigner: string | null;
+  recoveredUserHexSigner: string | null;
+  recoveredCoreSigner: string | null;
+  signature: `0x${string}`;
+  message: string;
+  libraryVerified: boolean;
+  adjustedVerified: boolean;
+}
+
 const EXAMPLE_CONTRACT_NAME = 'ExampleCounter';
+const CORE_APPROVAL_WINDOW_MS = 3 * 60 * 1000;
+
+function formatRemainingWindow(expiresAt: number) {
+  const remainingMs = expiresAt - Date.now();
+  if (remainingMs <= 0) {
+    return 'Expired';
+  }
+
+  const remainingSeconds = Math.ceil(remainingMs / 1000);
+  const minutes = Math.floor(remainingSeconds / 60);
+  const seconds = remainingSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
+function toCoreUserHexAddress(address: `0x${string}`): `0x${string}` {
+  return `0x1${address.slice(3)}`;
+}
+
+function logCoreAuthorizationDebug(debugInfo: CoreAuthorizationDebugInfo) {
+  console.groupCollapsed('[dual-space-demo] Core authorization check');
+  console.info('Operation', {
+    step1: 'Core wallet signs an authorization message for increment.',
+    step2: 'The app verifies the signature against the connected Core signer.',
+    step3: 'If valid, the eSpace wallet can execute the increment transaction.',
+  });
+  console.info('Authorization payload', {
+    contractAddress: debugInfo.contractAddress,
+    targetEspaceChainId: debugInfo.targetEspaceChainId,
+    targetCoreChainId: debugInfo.targetCoreChainId,
+    expectedCoreSigner: debugInfo.expectedCoreSigner,
+    message: debugInfo.message,
+    signature: debugInfo.signature,
+  });
+  console.info('Verification result', {
+    libraryVerified: debugInfo.libraryVerified,
+    adjustedVerified: debugInfo.adjustedVerified,
+    recoveredHexSigner: debugInfo.recoveredHexSigner,
+    recoveredUserHexSigner: debugInfo.recoveredUserHexSigner,
+    recoveredCoreSigner: debugInfo.recoveredCoreSigner,
+  });
+  console.groupEnd();
+}
 
 export function ExampleContract() {
   const { address: walletAddress, isConnected } = useAccount();
   const { isAuthenticated, isLoading: isAuthLoading, error: authError, signIn } = useAuth();
   const { activeChainId, isWrongChain, switchToTargetChain, targetChainId } = useDevkitNetworkSync();
+  const coreWallet = useCoreWallet();
+  const targetCoreChain = getCoreChainConfigForEspaceChain(targetChainId);
+  const normalizedCoreAddress = normalizeCoreAddressForChain(coreWallet.address, targetCoreChain.coreChainId);
+  const isCoreOnTarget = coreWallet.chainId?.toLowerCase() === targetCoreChain.chainIdHex;
 
   const [contract, setContract] = useState<ContractEntry | null>(null);
   const [writeError, setWriteError] = useState('');
   const [status, setStatus] = useState('');
   const [lockAmount, setLockAmount] = useState('0.25');
   const [lockMinutes, setLockMinutes] = useState('5');
+  const [coreApproval, setCoreApproval] = useState<CoreApproval | null>(null);
+  const [isArmingCoreApproval, setIsArmingCoreApproval] = useState(false);
   const activeChainLabel = getChainLabel(activeChainId);
   const targetChainLabel = getChainLabel(targetChainId);
   const { writeContractAsync, data: txHash, isPending: isWriting } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
+  const isCoreApprovalActive = !!coreApproval && coreApproval.expiresAt > Date.now();
 
   const { data: counterValue } = useReadExampleCounterValue({
     address: contract?.address as `0x${string}` | undefined,
@@ -72,23 +145,29 @@ export function ExampleContract() {
     return () => clearTimeout(timer);
   }, [txConfirmed]);
 
+  useEffect(() => {
+    setCoreApproval(null);
+  }, [contract?.address, normalizedCoreAddress, targetChainId]);
+
   async function runWrite(action: () => Promise<unknown>, pendingLabel: string) {
     try {
       setWriteError('');
       setStatus(pendingLabel);
       await action();
       setStatus('Mempool Entry...');
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Write failure';
       setWriteError(message);
       setStatus('');
+      return false;
     }
   }
 
   async function increment() {
     if (isWrongChain) { switchToTargetChain(); return; }
     if (!contract) return;
-    await runWrite(
+    return runWrite(
       () => writeContractAsync({ abi: exampleCounterAbi, address: contract.address as `0x${string}`, chainId: targetChainId, functionName: 'increment' }),
       'Incrementing...',
     );
@@ -97,7 +176,7 @@ export function ExampleContract() {
   async function reset() {
     if (isWrongChain) { switchToTargetChain(); return; }
     if (!contract) return;
-    await runWrite(
+    return runWrite(
       () => writeContractAsync({ abi: exampleCounterAbi, address: contract.address as `0x${string}`, chainId: targetChainId, functionName: 'reset' }),
       'Resetting...',
     );
@@ -114,7 +193,7 @@ export function ExampleContract() {
 
     const unlockTimestamp = BigInt(Math.floor(Date.now() / 1000) + minutes * 60);
 
-    await runWrite(
+    return runWrite(
       () => writeContractAsync({
         abi: exampleCounterAbi,
         address: contract.address as `0x${string}`,
@@ -130,10 +209,109 @@ export function ExampleContract() {
   async function withdrawLocked() {
     if (isWrongChain) { switchToTargetChain(); return; }
     if (!contract) return;
-    await runWrite(
+    return runWrite(
       () => writeContractAsync({ abi: exampleCounterAbi, address: contract.address as `0x${string}`, chainId: targetChainId, functionName: 'withdrawLocked' }),
       'Withdrawing...',
     );
+  }
+
+  async function armCoreIncrement() {
+    if (!contract) return;
+    if (!coreWallet.isConnected || !normalizedCoreAddress) {
+      setWriteError('Connect the Core wallet before arming a dual-space action.');
+      return;
+    }
+    if (!isCoreOnTarget) {
+      await coreWallet.switchChain(targetCoreChain);
+      return;
+    }
+
+    const walletClient = coreWallet.getWalletClient(targetCoreChain);
+    if (!walletClient) {
+      setWriteError('Core wallet client unavailable.');
+      return;
+    }
+
+    setIsArmingCoreApproval(true);
+    setWriteError('');
+
+    try {
+      const expiresAt = Date.now() + CORE_APPROVAL_WINDOW_MS;
+      const nonce = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`;
+      const message = [
+        'CFX DevKit Dual-Space Control',
+        'Action: increment',
+        `Contract: ${contract.address}`,
+        `eSpace Chain ID: ${targetChainId}`,
+        `Core Chain ID: ${targetCoreChain.coreChainId}`,
+        `Core Signer: ${normalizedCoreAddress}`,
+        `Expires At: ${new Date(expiresAt).toISOString()}`,
+        `Nonce: ${nonce}`,
+      ].join('\n');
+
+      const signature = await walletClient.signMessage({
+        account: normalizedCoreAddress,
+        message,
+      });
+
+      const recoveredHexSigner = await recoverMessageAddress({ message, signature });
+      const recoveredUserHexSigner = toCoreUserHexAddress(recoveredHexSigner);
+      const recoveredSigner = normalizeCoreAddressForChain(recoveredUserHexSigner, targetCoreChain.coreChainId);
+      const libraryVerified = recoveredSigner != null && recoveredSigner.toLowerCase() === normalizeCoreAddressForChain(recoveredHexSigner, targetCoreChain.coreChainId)?.toLowerCase();
+      const adjustedVerified = !!recoveredSigner && recoveredSigner.toLowerCase() === normalizedCoreAddress.toLowerCase();
+
+      logCoreAuthorizationDebug({
+        contractAddress: contract.address,
+        targetEspaceChainId: targetChainId,
+        targetCoreChainId: targetCoreChain.coreChainId,
+        expectedCoreSigner: normalizedCoreAddress,
+        recoveredHexSigner,
+        recoveredUserHexSigner,
+        recoveredCoreSigner: recoveredSigner,
+        signature,
+        message,
+        libraryVerified,
+        adjustedVerified,
+      });
+
+      if (!adjustedVerified) {
+        throw new Error(
+          [
+            'Core signature verification failed.',
+            `Expected signer: ${normalizedCoreAddress}`,
+            `Recovered signer: ${recoveredSigner ?? recoveredUserHexSigner}`,
+            'Open the browser console and inspect the [dual-space-demo] Core authorization check group for the full payload.',
+          ].join(' '),
+        );
+      }
+
+      setCoreApproval({
+        action: 'increment',
+        expiresAt,
+        message,
+        signature,
+        signer: recoveredSigner,
+      });
+      setStatus('Core authorization armed. Execute on eSpace before it expires.');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Core authorization failed';
+      setWriteError(message);
+      setStatus('');
+    } finally {
+      setIsArmingCoreApproval(false);
+    }
+  }
+
+  async function executeCoreControlledIncrement() {
+    if (!isCoreApprovalActive) {
+      setWriteError('Arm the increment from Core first.');
+      return;
+    }
+
+    const success = await increment();
+    if (success) {
+      setCoreApproval(null);
+    }
   }
 
   const busy = isWriting || isConfirming;
@@ -257,10 +435,57 @@ export function ExampleContract() {
               )}
             </div>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4 rounded-2xl border border-accent/10 bg-accent/5 p-6 backdrop-blur-md">
+                <div>
+                  <div className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-accent/50 italic">Core Authorization</div>
+                  <p className="text-[10px] leading-5 text-text-secondary/65">
+                    Core cannot submit the eSpace transaction directly. For this demo, Core signs the intent and eSpace executes the write.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Core Signer</span>
+                    <span className="font-mono text-xs text-text-primary">{normalizedCoreAddress ? `${normalizedCoreAddress.slice(0, 15)}…${normalizedCoreAddress.slice(-6)}` : 'Not connected'}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Core Network</span>
+                    <span className="font-mono text-xs text-text-primary">{targetCoreChain.label}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Approval</span>
+                    <span className={`font-mono text-xs ${isCoreApprovalActive ? 'text-success' : 'text-text-primary'}`}>
+                      {isCoreApprovalActive ? 'Armed' : 'Idle'}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Window</span>
+                    <span className="font-mono text-xs text-text-primary">{coreApproval ? formatRemainingWindow(coreApproval.expiresAt) : '3:00'}</span>
+                  </div>
+                </div>
+                <div className="mt-auto grid gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void armCoreIncrement()}
+                    disabled={busy || isArmingCoreApproval || !coreWallet.isConnected || coreWallet.isSwitching}
+                    className="btn btn-secondary !h-10 !text-[9px] font-black uppercase tracking-[0.2em]"
+                  >
+                    {isArmingCoreApproval ? 'Awaiting Core Signature...' : isCoreApprovalActive ? 'Re-arm Core Intent' : 'Arm Increment From Core'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void executeCoreControlledIncrement()}
+                    disabled={busy || !isCoreApprovalActive}
+                    className="btn btn-primary !h-10 !text-[9px] font-black uppercase tracking-[0.2em]"
+                  >
+                    {busy ? 'Processing...' : 'Execute Armed Increment'}
+                  </button>
+                </div>
+              </div>
+
               {/* Basic Interactions */}
               <div className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-md">
-                 <div className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-text-secondary/20 italic">Core Methods</div>
+                 <div className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-text-secondary/20 italic">eSpace Methods</div>
                  <div className="grid gap-3">
                     <button type="button" onClick={increment} disabled={busy} className="btn btn-primary !h-12 !text-[11px] font-black uppercase tracking-[0.3em] rounded-xl shadow-xl transition-all">
                       {busy ? 'Processing...' : 'Inc State'}
@@ -322,6 +547,13 @@ export function ExampleContract() {
               <p className="text-error/60 text-[8px] font-black uppercase italic tracking-tight">Error: {writeError.slice(0, 100)}</p>
             </div>
           )}
+          {coreApproval && isCoreApprovalActive ? (
+            <div className="px-4 py-2 rounded-xl bg-success/5 border border-success/10 animate-fade-in">
+              <p className="text-success/70 text-[8px] font-black uppercase italic tracking-tight">
+                Core authorization active from {coreApproval.signer.slice(0, 15)}… until {new Date(coreApproval.expiresAt).toLocaleTimeString()}.
+              </p>
+            </div>
+          ) : null}
 
           <div className="border-t border-white/5 pt-6 flex flex-col items-center gap-2 select-none opacity-20">
             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-text-secondary">Wagmi Integrated Sandbox</span>

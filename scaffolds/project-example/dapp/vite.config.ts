@@ -104,7 +104,7 @@ function siweAuthPlugin(): Plugin {
 
 const proxyBase = process.env.VITE_PROXY_BASE;
 const fsAllow = [resolve(process.cwd(), '..'), '/workspace'];
-const passthroughPrefixes = ['/rpc', '/api', '/devkit'];
+const passthroughPrefixes = ['/rpc', '/core-rpc', '/api', '/devkit'];
 
 export default defineConfig({
   base: proxyBase ?? './',
@@ -130,6 +130,11 @@ export default defineConfig({
         target: 'http://localhost:8545',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/rpc/, ''),
+      },
+      '/core-rpc': {
+        target: 'http://localhost:12537',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/core-rpc/, ''),
       },
       // Proxy /api/* to devkit, EXCEPT routes handled by local plugins
       '/api': {

@@ -17,6 +17,7 @@ const INDEX_PATH = join(DIST_DIR, 'index.html');
 
 const DEVKIT_URL = process.env.DEVKIT_URL ?? 'http://localhost:7748';
 const ESPACE_RPC = process.env.ESPACE_RPC_URL ?? 'http://localhost:8545';
+const CORE_RPC = process.env.CORE_RPC_URL ?? 'http://localhost:12537';
 const PORT = Number(process.env.PORT ?? 3030);
 
 interface DevkitContract {
@@ -190,6 +191,24 @@ const server = createServer(async (req: IncomingMessage, res: ServerResponse) =>
       return;
     }
 
+    if (pathname === '/core-rpc' && req.method === 'POST') {
+      const body = await readBody(req);
+      const rpcRes = await fetch(CORE_RPC, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+        signal: AbortSignal.timeout(10_000),
+      });
+      const rpcText = await rpcRes.text();
+      res.writeHead(200, {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Content-Length': Buffer.byteLength(rpcText),
+      });
+      res.end(rpcText);
+      return;
+    }
+
     if (pathname === '/api/auth/nonce' && req.method === 'GET') {
       const nonce = generateNonce();
       pendingNonces.set(nonce, true);
@@ -281,5 +300,6 @@ server.listen(PORT, () => {
   console.log(`\nCFX DevKit Project Example`);
   console.log(`  http://localhost:${PORT}`);
   console.log(`  DevKit: ${DEVKIT_URL}`);
+  console.log(`  Core RPC: ${CORE_RPC}`);
   console.log(`  eSpace RPC: ${ESPACE_RPC}\n`);
 });
