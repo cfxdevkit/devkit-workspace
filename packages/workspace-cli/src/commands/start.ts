@@ -4,11 +4,12 @@
 
 import {
   ensureTargetVolume,
+  imageExists,
   resolveLaunchImage,
   socketGroupId,
   stopAndRemoveManagedContainers,
 } from '../runtime/container.js';
-import { runVisibleResult } from '../runtime/exec.js';
+import { run, runVisibleResult } from '../runtime/exec.js';
 import { detectSocket } from '../runtime/detect.js';
 import { loadState, saveState, getStateFilePath } from '../state/loader.js';
 import { resolveWorkspaceTarget } from '../state/profile.js';
@@ -28,7 +29,45 @@ export function startWorkspace(
   const target = resolveWorkspaceTarget(opts, state);
   const socket = detectSocket(runtime, opts.socket);
   const imageSelection = resolveLaunchImage(runtime, opts, defaultImage, LOCAL_IMAGE);
-  const image = imageSelection.image;
+  let image = imageSelection.image;
+
+  console.log('Starting CFX DevKit workspace...');
+  console.log(`  Runtime:   ${runtime}`);
+  console.log(`  Image:     ${image}`);
+  console.log(`  Source:    ${imageSelection.source}`);
+  console.log(`  Profile:   ${target.profileSlug}`);
+  console.log(`  Container: ${target.containerName}`);
+  console.log(`  Volume:    ${target.volumeName}`);
+  console.log(`  Workspace: ${target.display}`);
+  console.log(`  State:     ${getStateFilePath()}`);
+  console.log('  URL:       pending, available after startup completes');
+  console.log('');
+
+  if (!imageExists(runtime, image)) {
+    console.log(`Pulling image ${image}...`);
+    let pullStatus = run(runtime, ['pull', image], true);
+
+    if (
+      pullStatus !== 0 &&
+      imageSelection.source === 'published' &&
+      image === defaultImage
+    ) {
+      console.warn(`Published image ${defaultImage} is unavailable. Retrying with ${DEFAULT_IMAGE_LATEST}...`);
+      image = DEFAULT_IMAGE_LATEST;
+      pullStatus = run(runtime, ['pull', image], true);
+    }
+
+    if (pullStatus !== 0) {
+      if (imageSelection.source === 'published') {
+        console.error('Published image launch failed.');
+        console.error('Check your internet connection or specify a local image with --image or --local-image.');
+      }
+      return pullStatus;
+    }
+
+    console.log(`Image ready: ${image}`);
+    console.log('');
+  }
 
   stopAndRemoveManagedContainers(runtime);
   ensureTargetVolume(runtime, target);
@@ -81,18 +120,6 @@ export function startWorkspace(
 
   args.push(image);
 
-  console.log('Starting CFX DevKit workspace...');
-  console.log(`  Runtime:   ${runtime}`);
-  console.log(`  Image:     ${image}`);
-  console.log(`  Source:    ${imageSelection.source}`);
-  console.log(`  Profile:   ${target.profileSlug}`);
-  console.log(`  Container: ${target.containerName}`);
-  console.log(`  Volume:    ${target.volumeName}`);
-  console.log(`  Workspace: ${target.display}`);
-  console.log(`  State:     ${getStateFilePath()}`);
-  console.log('  URL:       http://localhost:8080');
-  console.log('');
-
   let launch = runVisibleResult(runtime, args, opts.verbose);
   let status = launch.status;
 
@@ -103,7 +130,8 @@ export function startWorkspace(
     shouldRetryWithLatest(launch.stderr)
   ) {
     console.warn(`Published image ${defaultImage} is unavailable. Retrying with ${DEFAULT_IMAGE_LATEST}...`);
-    const retryArgs = [...args.slice(0, -1), DEFAULT_IMAGE_LATEST];
+    image = DEFAULT_IMAGE_LATEST;
+    const retryArgs = [...args.slice(0, -1), image];
     launch = runVisibleResult(runtime, retryArgs, opts.verbose);
     status = launch.status;
   }
@@ -114,6 +142,7 @@ export function startWorkspace(
   }
   if (status === 0) {
     saveState(state);
+    console.log('URL: http://localhost:8080');
     console.log('Workspace is running at http://localhost:8080');
   }
   return status;
