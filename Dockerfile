@@ -280,12 +280,6 @@ RUN npm install -g --offline /tmp/cfxdevkit-mcp.tgz \
 # ══════════════════════════════════════════════════════════════════════════════
 FROM devkit AS opencode
 
-# Ensure core chain/RPC abstractions are explicitly present in the image.
-# Even though @cfxdevkit/core is bundled transitively with devkit-mcp,
-# keeping it as a first-class global install makes network tooling explicit.
-RUN --mount=type=cache,id=npm-opencode-cache,target=/root/.npm,sharing=locked \
-     npm install -g --fetch-retries 5 --fetch-retry-mintimeout 10000 @cfxdevkit/core@1.2.4
-
 # opencode — downloaded in an isolated version-pinned fetch stage
 COPY --from=fetch-opencode /artifacts/opencode.tar.gz /tmp/opencode.tar.gz
 RUN tar -xzf /tmp/opencode.tar.gz -C /usr/local/bin/ \
@@ -322,22 +316,20 @@ COPY config/settings.json /home/node/.local/share/code-server/User/settings.json
 RUN chown -R node:node /home/node/.local
 
 # Project example workspace (default workspace shipped with the image)
-COPY scaffolds/project-example/ project-example/
+COPY --chown=node:node scaffolds/project-example/ project-example/
 # Assemble the built-in workspace from the same shared ui package the template uses.
-COPY packages/ui-shared/ project-example/ui-shared/
+COPY --chown=node:node packages/ui-shared/ project-example/ui-shared/
 # Copy project-example dapp build artifacts from builder (excluded from build context by .dockerignore).
-COPY --from=builder /build/project-example/dapp/dist/        project-example/dapp/dist/
-COPY --from=builder /build/project-example/dapp/dist-server/ project-example/dapp/dist-server/
-RUN chown -R node:node project-example
+COPY --chown=node:node --from=builder /build/project-example/dapp/dist/        project-example/dapp/dist/
+COPY --chown=node:node --from=builder /build/project-example/dapp/dist-server/ project-example/dapp/dist-server/
 
 # Standalone DEX UI — Uniswap V2 swap/LP interface (managed by DEX UI status bar)
 # Baked into the image so it can be started without internet access.
 # server.mjs runs as a Node process; uses @cfxdevkit/dex-contracts from node_modules.
-COPY --from=builder /build/dex-ui/dist            dex-ui/dist/
-COPY --from=builder /tmp/dex-server/server.mjs    dex-ui/server.mjs
-COPY --from=builder /tmp/dex-server/package.json  dex-ui/package.json
-COPY --from=builder /tmp/dex-server/node_modules  dex-ui/node_modules/
-RUN chown -R node:node dex-ui
+COPY --chown=node:node --from=builder /build/dex-ui/dist            dex-ui/dist/
+COPY --chown=node:node --from=builder /tmp/dex-server/server.mjs    dex-ui/server.mjs
+COPY --chown=node:node --from=builder /tmp/dex-server/package.json  dex-ui/package.json
+COPY --chown=node:node --from=builder /tmp/dex-server/node_modules  dex-ui/node_modules/
 
 # Default workspace (override at runtime: -e WORKSPACE=/workspace)
 ENV WORKSPACE=/opt/devkit/project-example

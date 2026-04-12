@@ -21,7 +21,7 @@ The image is built in 7 stages:
 | `builder` | Compiles all TypeScript packages; packs `@cfxdevkit/mcp` and the `.vsix` extension |
 | `base` | Debian slim + system tools + GitHub CLI + Docker CLI + code-server |
 | `devkit` | Vendored workspace backend runtime + `devkit-mcp` global binary |
-| `opencode` | `opencode` CLI + baked-in AI skills and config + explicit global install of `@cfxdevkit/core` |
+| `opencode` | `opencode` CLI + baked-in AI skills and config |
 | `runtime` | VS Code extension installed + assembled built-in project workspace + entrypoint |
 
 The 500 MB+ `node_modules` build tree never reaches the final image.

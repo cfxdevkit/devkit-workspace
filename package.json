@@ -80,6 +80,7 @@
     "workspace:rebuild": "node ./scripts/workspace-local.mjs rebuild",
     "workspace:install": "node ./scripts/workspace-install.mjs install",
     "workspace:uninstall": "node ./scripts/workspace-install.mjs uninstall",
+    "image:analyze": "node ./scripts/analyze-image.mjs",
     "image:build": "node ./scripts/compose.mjs build",
     "image:up": "node ./scripts/compose.mjs up -d",
     "image:down": "node ./scripts/compose.mjs down",
