@@ -2,6 +2,22 @@
   "name": "conflux-workspace",
   "version": "0.1.0",
   "description": "Manage and launch the CFX DevKit workspace container with per-workspace persistence profiles",
+  "homepage": "https://github.com/cfxdevkit/devkit-workspace#readme",
+  "bugs": {
+    "url": "https://github.com/cfxdevkit/devkit-workspace/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/cfxdevkit/devkit-workspace.git"
+  },
+  "keywords": [
+    "conflux",
+    "cfx",
+    "docker",
+    "devcontainer",
+    "workspace",
+    "cli"
+  ],
   "license": "Apache-2.0",
   "type": "module",
   "bin": {
@@ -18,6 +34,9 @@
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
+  },
+  "engines": {
+    "node": ">=22"
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

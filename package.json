@@ -28,6 +28,7 @@
     "verify:fast": "node ./scripts/verify-fast.mjs",
     "validate": "pnpm run check:imports && pnpm run check:packages",
     "audit:build": "node ./scripts/run-build-audit.mjs",
+    "release:bump": "node ./scripts/bump-version.mjs",
     "deps:install": "pnpm run workspace:install",
     "project-example:generate": "node ./scripts/assemble-project-example.mjs ./.generated/project-example",
     "project-example:install": "pnpm run project-example:generate && pnpm --dir .generated/project-example install",
