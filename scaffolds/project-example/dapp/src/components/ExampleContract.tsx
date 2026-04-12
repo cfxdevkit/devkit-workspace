@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
-import { parseEther } from 'viem';
+import { encodeFunctionData, parseEther, type Hex } from 'viem';
+import { hexAddressToBase32 } from 'cive/utils';
 import { exampleCounterAbi, useReadExampleCounterValue } from '../generated/hooks';
 import { getContractAddress } from '../generated/contracts-addresses';
 import { getChainLabel } from '../chains';
-import { useAuth, } from '@cfxdevkit/ui-shared';
+import { useAuth } from '@cfxdevkit/ui-shared';
+import { getCoreChainConfigForEspaceChain, normalizeCoreAddressForChain, useCoreWallet } from '../hooks/useCoreWallet';
 import { useDevkitNetworkSync } from '../hooks/useDevkitNetwork';
 
 interface ContractEntry {
@@ -12,24 +14,69 @@ interface ContractEntry {
   address: string;
 }
 
+interface CoreExecutionResult {
+  action: string;
+  hash: Hex;
+  outcomeStatus: 'success' | 'failed' | 'skipped';
+}
+
 const EXAMPLE_CONTRACT_NAME = 'ExampleCounter';
+const CROSS_SPACE_CALL_ADDRESS = '0x0888000000000000000000000000000000000006' as const;
+const CORE_BRIDGE_AMOUNT_CFX = '1';
+const CROSS_SPACE_CALL_ABI = [
+  {
+    type: 'function',
+    name: 'callEVM',
+    inputs: [
+      { name: 'to', type: 'bytes20', internalType: 'bytes20' },
+      { name: 'data', type: 'bytes', internalType: 'bytes' },
+    ],
+    outputs: [{ name: '', type: 'bytes', internalType: 'bytes' }],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    name: 'transferEVM',
+    inputs: [{ name: 'to', type: 'bytes20', internalType: 'bytes20' }],
+    outputs: [{ name: '', type: 'bytes', internalType: 'bytes' }],
+    stateMutability: 'payable',
+  },
+] as const;
+
+function formatShortHash(hash: Hex | null) {
+  if (!hash) {
+    return '—';
+  }
+
+  return `${hash.slice(0, 10)}…${hash.slice(-8)}`;
+}
 
 export function ExampleContract() {
   const { address: walletAddress, isConnected } = useAccount();
   const { isAuthenticated, isLoading: isAuthLoading, error: authError, signIn } = useAuth();
   const { activeChainId, isWrongChain, switchToTargetChain, targetChainId } = useDevkitNetworkSync();
+  const coreWallet = useCoreWallet();
+  const targetCoreChain = getCoreChainConfigForEspaceChain(targetChainId);
+  const normalizedCoreAddress = normalizeCoreAddressForChain(coreWallet.address, targetCoreChain.coreChainId);
+  const isCoreOnTarget = coreWallet.chainId?.toLowerCase() === targetCoreChain.chainIdHex;
+  const crossSpaceCallCoreAddress = useMemo(
+    () => hexAddressToBase32({ hexAddress: CROSS_SPACE_CALL_ADDRESS, networkId: targetCoreChain.coreChainId, verbose: false }),
+    [targetCoreChain.coreChainId],
+  );
 
   const [contract, setContract] = useState<ContractEntry | null>(null);
   const [writeError, setWriteError] = useState('');
   const [status, setStatus] = useState('');
   const [lockAmount, setLockAmount] = useState('0.25');
   const [lockMinutes, setLockMinutes] = useState('5');
+  const [isCoreActionPending, setIsCoreActionPending] = useState(false);
+  const [lastCoreExecution, setLastCoreExecution] = useState<CoreExecutionResult | null>(null);
   const activeChainLabel = getChainLabel(activeChainId);
   const targetChainLabel = getChainLabel(targetChainId);
   const { writeContractAsync, data: txHash, isPending: isWriting } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
 
-  const { data: counterValue } = useReadExampleCounterValue({
+  const { data: counterValue, refetch: refetchCounterValue } = useReadExampleCounterValue({
     address: contract?.address as `0x${string}` | undefined,
     chainId: targetChainId,
     query: {
@@ -38,7 +85,7 @@ export function ExampleContract() {
     },
   });
 
-  const { data: lockInfo } = useReadContract({
+  const { data: lockInfo, refetch: refetchLockInfo } = useReadContract({
     abi: exampleCounterAbi,
     address: contract?.address as `0x${string}` | undefined,
     chainId: targetChainId,
@@ -78,17 +125,19 @@ export function ExampleContract() {
       setStatus(pendingLabel);
       await action();
       setStatus('Mempool Entry...');
+      return true;
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Write failure';
       setWriteError(message);
       setStatus('');
+      return false;
     }
   }
 
   async function increment() {
     if (isWrongChain) { switchToTargetChain(); return; }
     if (!contract) return;
-    await runWrite(
+    return runWrite(
       () => writeContractAsync({ abi: exampleCounterAbi, address: contract.address as `0x${string}`, chainId: targetChainId, functionName: 'increment' }),
       'Incrementing...',
     );
@@ -97,7 +146,7 @@ export function ExampleContract() {
   async function reset() {
     if (isWrongChain) { switchToTargetChain(); return; }
     if (!contract) return;
-    await runWrite(
+    return runWrite(
       () => writeContractAsync({ abi: exampleCounterAbi, address: contract.address as `0x${string}`, chainId: targetChainId, functionName: 'reset' }),
       'Resetting...',
     );
@@ -114,7 +163,7 @@ export function ExampleContract() {
 
     const unlockTimestamp = BigInt(Math.floor(Date.now() / 1000) + minutes * 60);
 
-    await runWrite(
+    return runWrite(
       () => writeContractAsync({
         abi: exampleCounterAbi,
         address: contract.address as `0x${string}`,
@@ -130,13 +179,135 @@ export function ExampleContract() {
   async function withdrawLocked() {
     if (isWrongChain) { switchToTargetChain(); return; }
     if (!contract) return;
-    await runWrite(
+    return runWrite(
       () => writeContractAsync({ abi: exampleCounterAbi, address: contract.address as `0x${string}`, chainId: targetChainId, functionName: 'withdrawLocked' }),
       'Withdrawing...',
     );
   }
 
-  const busy = isWriting || isConfirming;
+  async function getReadyCoreContext() {
+    if (!contract) {
+      setWriteError('Contract unavailable on the current eSpace target.');
+      return null;
+    }
+    if (!coreWallet.isConnected || !normalizedCoreAddress) {
+      setWriteError('Connect the Core wallet before using cross-space actions.');
+      return null;
+    }
+    if (!isCoreOnTarget) {
+      await coreWallet.switchChain(targetCoreChain);
+      return null;
+    }
+
+    const walletClient = coreWallet.getWalletClient(targetCoreChain);
+    if (!walletClient) {
+      setWriteError('Core wallet client unavailable.');
+      return null;
+    }
+
+    const publicClient = coreWallet.getPublicClient(targetCoreChain);
+    return {
+      account: normalizedCoreAddress,
+      publicClient,
+      walletClient,
+    };
+  }
+
+  async function runCoreCrossSpaceAction(
+    actionLabel: string,
+    pendingLabel: string,
+    successLabel: string,
+    action: (context: NonNullable<Awaited<ReturnType<typeof getReadyCoreContext>>>) => Promise<Hex>,
+  ) {
+    const coreContext = await getReadyCoreContext();
+    if (!coreContext) {
+      return false;
+    }
+
+    setIsCoreActionPending(true);
+    setWriteError('');
+    setStatus(pendingLabel);
+
+    try {
+      const hash = await action(coreContext);
+      setLastCoreExecution(null);
+      setStatus('Waiting for Core finality...');
+
+      const receipt = await coreContext.publicClient.waitForTransactionReceipt({
+        hash,
+        timeout: 90_000,
+      });
+
+      if (receipt.outcomeStatus !== 'success') {
+        throw new Error(`Core transaction ${receipt.outcomeStatus}.`);
+      }
+
+      setLastCoreExecution({
+        action: actionLabel,
+        hash,
+        outcomeStatus: receipt.outcomeStatus,
+      });
+      setStatus(successLabel);
+      await Promise.all([refetchCounterValue(), refetchLockInfo()]);
+      return true;
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Core cross-space transaction failed';
+      setWriteError(message);
+      setStatus('');
+      return false;
+    } finally {
+      setIsCoreActionPending(false);
+    }
+  }
+
+  async function incrementFromCore() {
+    if (!contract) return;
+
+    const eSpaceCalldata = encodeFunctionData({
+      abi: exampleCounterAbi,
+      functionName: 'increment',
+    });
+
+    return runCoreCrossSpaceAction(
+      'Core increment',
+      'Submitting Core -> eSpace increment...',
+      'Core increment finalized.',
+      ({ account, walletClient }) => walletClient.sendTransaction({
+        account,
+        to: crossSpaceCallCoreAddress,
+        data: encodeFunctionData({
+          abi: CROSS_SPACE_CALL_ABI,
+          functionName: 'callEVM',
+          args: [contract.address as `0x${string}`, eSpaceCalldata],
+        }),
+      }),
+    );
+  }
+
+  async function bridgeCfxFromCore() {
+    if (!walletAddress) {
+      setWriteError('Connect the eSpace wallet before bridging CFX from Core.');
+      return;
+    }
+
+    return runCoreCrossSpaceAction(
+      'Core bridge',
+      `Bridging ${CORE_BRIDGE_AMOUNT_CFX} CFX to eSpace...`,
+      `Bridged ${CORE_BRIDGE_AMOUNT_CFX} CFX to eSpace.`,
+      ({ account, walletClient }) => walletClient.sendTransaction({
+        account,
+        to: crossSpaceCallCoreAddress,
+        data: encodeFunctionData({
+          abi: CROSS_SPACE_CALL_ABI,
+          functionName: 'transferEVM',
+          args: [walletAddress],
+        }),
+        value: parseEther(CORE_BRIDGE_AMOUNT_CFX),
+      }),
+    );
+  }
+
+  const busy = isWriting || isConfirming || isCoreActionPending;
 
   return (
     <div className="flex flex-col gap-6">
@@ -257,10 +428,61 @@ export function ExampleContract() {
               )}
             </div>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-2">
+            <div className="grid gap-4 lg:grid-cols-3">
+              <div className="flex flex-col gap-4 rounded-2xl border border-accent/10 bg-accent/5 p-6 backdrop-blur-md">
+                <div>
+                  <div className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-accent/50 italic">Core Cross-Space</div>
+                  <p className="text-[10px] leading-5 text-text-secondary/65">
+                    This path uses the native CrossSpaceCall precompile so Fluent can drive the eSpace counter or bridge CFX without a backend handoff.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Core Signer</span>
+                    <span className="font-mono text-xs text-text-primary">{normalizedCoreAddress ? `${normalizedCoreAddress.slice(0, 15)}…${normalizedCoreAddress.slice(-6)}` : 'Not connected'}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Core Network</span>
+                    <span className="font-mono text-xs text-text-primary">{targetCoreChain.label}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Route</span>
+                    <span className="font-mono text-xs text-text-primary">Core → CrossSpaceCall → eSpace</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Bridge Target</span>
+                    <span className="font-mono text-xs text-text-primary">{walletAddress ? `${walletAddress.slice(0, 8)}…${walletAddress.slice(-6)}` : 'Connect eSpace wallet'}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Last Core Tx</span>
+                    <span className={`font-mono text-xs ${lastCoreExecution?.outcomeStatus === 'success' ? 'text-success' : 'text-text-primary'}`}>
+                      {formatShortHash(lastCoreExecution?.hash ?? null)}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-auto grid gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void incrementFromCore()}
+                    disabled={busy || !coreWallet.isConnected || coreWallet.isSwitching}
+                    className="btn btn-secondary !h-10 !text-[9px] font-black uppercase tracking-[0.2em]"
+                  >
+                    {isCoreActionPending ? 'Awaiting Core Confirmation...' : 'Increment From Core'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void bridgeCfxFromCore()}
+                    disabled={busy || !coreWallet.isConnected || coreWallet.isSwitching || !walletAddress}
+                    className="btn btn-primary !h-10 !text-[9px] font-black uppercase tracking-[0.2em]"
+                  >
+                    {isCoreActionPending ? 'Processing...' : `Bridge ${CORE_BRIDGE_AMOUNT_CFX} CFX To eSpace`}
+                  </button>
+                </div>
+              </div>
+
               {/* Basic Interactions */}
               <div className="flex flex-col gap-3 rounded-2xl border border-white/5 bg-white/[0.02] p-6 backdrop-blur-md">
-                 <div className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-text-secondary/20 italic">Core Methods</div>
+                 <div className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-text-secondary/20 italic">eSpace Methods</div>
                  <div className="grid gap-3">
                     <button type="button" onClick={increment} disabled={busy} className="btn btn-primary !h-12 !text-[11px] font-black uppercase tracking-[0.3em] rounded-xl shadow-xl transition-all">
                       {busy ? 'Processing...' : 'Inc State'}
@@ -310,7 +532,6 @@ export function ExampleContract() {
             </div>
           )}
 
-          {/* Status Feedback */}
           {status && (
             <div className="px-4 py-2 rounded-xl bg-accent/5 border border-accent/10 animate-fade-in flex items-center gap-2">
               <div className="h-1 w-1 rounded-full bg-accent animate-pulse shadow-[0_0_5px_currentColor]" />
@@ -322,6 +543,13 @@ export function ExampleContract() {
               <p className="text-error/60 text-[8px] font-black uppercase italic tracking-tight">Error: {writeError.slice(0, 100)}</p>
             </div>
           )}
+          {lastCoreExecution ? (
+            <div className="px-4 py-2 rounded-xl bg-success/5 border border-success/10 animate-fade-in">
+              <p className="text-success/70 text-[8px] font-black uppercase italic tracking-tight">
+                {lastCoreExecution.action} finalized through Core tx {formatShortHash(lastCoreExecution.hash)} with outcome {lastCoreExecution.outcomeStatus}.
+              </p>
+            </div>
+          ) : null}
 
           <div className="border-t border-white/5 pt-6 flex flex-col items-center gap-2 select-none opacity-20">
             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-text-secondary">Wagmi Integrated Sandbox</span>

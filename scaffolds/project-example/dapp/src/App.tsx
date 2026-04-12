@@ -1,5 +1,6 @@
 import { useAccount } from 'wagmi';
 import { ConnectButton, DevkitStatus, FaucetWidget, ShellOverview, MetricCard } from '@cfxdevkit/ui-shared';
+import { DualWalletPanel } from './components/DualWalletPanel';
 import { ExampleContract } from './components/ExampleContract';
 import { getChainLabel } from './chains';
 import { useDevkitNetworkSync } from './hooks/useDevkitNetwork';
@@ -55,7 +56,7 @@ export function App() {
         <div className="animate-fade-in-up">
            <ShellOverview 
             title="Project Sandbox"
-            description="High-density interface for smart contract experimentation. Analyze state mutations and execute protocol operations in an isolated developer environment."
+          description="High-density interface for smart contract experimentation. This first cross-space pass keeps one app shell while exposing separate eSpace and Core wallet surfaces."
             statusLabel={isWrongChain ? 'Network Mismatch' : isConnected ? 'Node Active' : 'Offline'}
             statusVariant={isWrongChain ? 'warning' : isConnected ? 'success' : 'neutral'}
             metrics={
@@ -76,9 +77,18 @@ export function App() {
                   hint="Session state" 
                   variant={isConnected ? 'success' : 'default'}
                 />
+                <MetricCard 
+                  label="Wallet Layout" 
+                  value="Dual Panel" 
+                  hint="eSpace + Core" 
+                />
               </>
             }
           />
+        </div>
+
+        <div className="animate-fade-in-up" style={{ animationDelay: '0.05s' }}>
+          <DualWalletPanel />
         </div>
 
         <div className="animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
