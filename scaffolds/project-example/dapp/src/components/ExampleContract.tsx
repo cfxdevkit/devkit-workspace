@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useAccount, useReadContract, useWaitForTransactionReceipt, useWriteContract } from 'wagmi';
-import { parseEther } from 'viem';
-import { recoverMessageAddress } from 'cive/utils';
+import { encodeFunctionData, parseEther, type Hex } from 'viem';
+import { hexAddressToBase32 } from 'cive/utils';
 import { exampleCounterAbi, useReadExampleCounterValue } from '../generated/hooks';
 import { getContractAddress } from '../generated/contracts-addresses';
 import { getChainLabel } from '../chains';
-import { useAuth, } from '@cfxdevkit/ui-shared';
+import { useAuth } from '@cfxdevkit/ui-shared';
 import { getCoreChainConfigForEspaceChain, normalizeCoreAddressForChain, useCoreWallet } from '../hooks/useCoreWallet';
 import { useDevkitNetworkSync } from '../hooks/useDevkitNetwork';
 
@@ -14,70 +14,41 @@ interface ContractEntry {
   address: string;
 }
 
-interface CoreApproval {
-  action: 'increment';
-  expiresAt: number;
-  message: string;
-  signature: `0x${string}`;
-  signer: string;
-}
-
-interface CoreAuthorizationDebugInfo {
-  contractAddress: string;
-  targetEspaceChainId: number;
-  targetCoreChainId: number;
-  expectedCoreSigner: string;
-  recoveredHexSigner: string | null;
-  recoveredUserHexSigner: string | null;
-  recoveredCoreSigner: string | null;
-  signature: `0x${string}`;
-  message: string;
-  libraryVerified: boolean;
-  adjustedVerified: boolean;
+interface CoreExecutionResult {
+  action: string;
+  hash: Hex;
+  outcomeStatus: 'success' | 'failed' | 'skipped';
 }
 
 const EXAMPLE_CONTRACT_NAME = 'ExampleCounter';
-const CORE_APPROVAL_WINDOW_MS = 3 * 60 * 1000;
+const CROSS_SPACE_CALL_ADDRESS = '0x0888000000000000000000000000000000000006' as const;
+const CORE_BRIDGE_AMOUNT_CFX = '1';
+const CROSS_SPACE_CALL_ABI = [
+  {
+    type: 'function',
+    name: 'callEVM',
+    inputs: [
+      { name: 'to', type: 'bytes20', internalType: 'bytes20' },
+      { name: 'data', type: 'bytes', internalType: 'bytes' },
+    ],
+    outputs: [{ name: '', type: 'bytes', internalType: 'bytes' }],
+    stateMutability: 'payable',
+  },
+  {
+    type: 'function',
+    name: 'transferEVM',
+    inputs: [{ name: 'to', type: 'bytes20', internalType: 'bytes20' }],
+    outputs: [{ name: '', type: 'bytes', internalType: 'bytes' }],
+    stateMutability: 'payable',
+  },
+] as const;
 
-function formatRemainingWindow(expiresAt: number) {
-  const remainingMs = expiresAt - Date.now();
-  if (remainingMs <= 0) {
-    return 'Expired';
+function formatShortHash(hash: Hex | null) {
+  if (!hash) {
+    return '—';
   }
 
-  const remainingSeconds = Math.ceil(remainingMs / 1000);
-  const minutes = Math.floor(remainingSeconds / 60);
-  const seconds = remainingSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
-
-function toCoreUserHexAddress(address: `0x${string}`): `0x${string}` {
-  return `0x1${address.slice(3)}`;
-}
-
-function logCoreAuthorizationDebug(debugInfo: CoreAuthorizationDebugInfo) {
-  console.groupCollapsed('[dual-space-demo] Core authorization check');
-  console.info('Operation', {
-    step1: 'Core wallet signs an authorization message for increment.',
-    step2: 'The app verifies the signature against the connected Core signer.',
-    step3: 'If valid, the eSpace wallet can execute the increment transaction.',
-  });
-  console.info('Authorization payload', {
-    contractAddress: debugInfo.contractAddress,
-    targetEspaceChainId: debugInfo.targetEspaceChainId,
-    targetCoreChainId: debugInfo.targetCoreChainId,
-    expectedCoreSigner: debugInfo.expectedCoreSigner,
-    message: debugInfo.message,
-    signature: debugInfo.signature,
-  });
-  console.info('Verification result', {
-    libraryVerified: debugInfo.libraryVerified,
-    adjustedVerified: debugInfo.adjustedVerified,
-    recoveredHexSigner: debugInfo.recoveredHexSigner,
-    recoveredUserHexSigner: debugInfo.recoveredUserHexSigner,
-    recoveredCoreSigner: debugInfo.recoveredCoreSigner,
-  });
-  console.groupEnd();
+  return `${hash.slice(0, 10)}…${hash.slice(-8)}`;
 }
 
 export function ExampleContract() {
@@ -88,21 +59,24 @@ export function ExampleContract() {
   const targetCoreChain = getCoreChainConfigForEspaceChain(targetChainId);
   const normalizedCoreAddress = normalizeCoreAddressForChain(coreWallet.address, targetCoreChain.coreChainId);
   const isCoreOnTarget = coreWallet.chainId?.toLowerCase() === targetCoreChain.chainIdHex;
+  const crossSpaceCallCoreAddress = useMemo(
+    () => hexAddressToBase32({ hexAddress: CROSS_SPACE_CALL_ADDRESS, networkId: targetCoreChain.coreChainId, verbose: false }),
+    [targetCoreChain.coreChainId],
+  );
 
   const [contract, setContract] = useState<ContractEntry | null>(null);
   const [writeError, setWriteError] = useState('');
   const [status, setStatus] = useState('');
   const [lockAmount, setLockAmount] = useState('0.25');
   const [lockMinutes, setLockMinutes] = useState('5');
-  const [coreApproval, setCoreApproval] = useState<CoreApproval | null>(null);
-  const [isArmingCoreApproval, setIsArmingCoreApproval] = useState(false);
+  const [isCoreActionPending, setIsCoreActionPending] = useState(false);
+  const [lastCoreExecution, setLastCoreExecution] = useState<CoreExecutionResult | null>(null);
   const activeChainLabel = getChainLabel(activeChainId);
   const targetChainLabel = getChainLabel(targetChainId);
   const { writeContractAsync, data: txHash, isPending: isWriting } = useWriteContract();
   const { isLoading: isConfirming, isSuccess: txConfirmed } = useWaitForTransactionReceipt({ hash: txHash });
-  const isCoreApprovalActive = !!coreApproval && coreApproval.expiresAt > Date.now();
 
-  const { data: counterValue } = useReadExampleCounterValue({
+  const { data: counterValue, refetch: refetchCounterValue } = useReadExampleCounterValue({
     address: contract?.address as `0x${string}` | undefined,
     chainId: targetChainId,
     query: {
@@ -111,7 +85,7 @@ export function ExampleContract() {
     },
   });
 
-  const { data: lockInfo } = useReadContract({
+  const { data: lockInfo, refetch: refetchLockInfo } = useReadContract({
     abi: exampleCounterAbi,
     address: contract?.address as `0x${string}` | undefined,
     chainId: targetChainId,
@@ -144,10 +118,6 @@ export function ExampleContract() {
     const timer = setTimeout(() => setStatus(''), 5000);
     return () => clearTimeout(timer);
   }, [txConfirmed]);
-
-  useEffect(() => {
-    setCoreApproval(null);
-  }, [contract?.address, normalizedCoreAddress, targetChainId]);
 
   async function runWrite(action: () => Promise<unknown>, pendingLabel: string) {
     try {
@@ -215,106 +185,129 @@ export function ExampleContract() {
     );
   }
 
-  async function armCoreIncrement() {
-    if (!contract) return;
+  async function getReadyCoreContext() {
+    if (!contract) {
+      setWriteError('Contract unavailable on the current eSpace target.');
+      return null;
+    }
     if (!coreWallet.isConnected || !normalizedCoreAddress) {
-      setWriteError('Connect the Core wallet before arming a dual-space action.');
-      return;
+      setWriteError('Connect the Core wallet before using cross-space actions.');
+      return null;
     }
     if (!isCoreOnTarget) {
       await coreWallet.switchChain(targetCoreChain);
-      return;
+      return null;
     }
 
     const walletClient = coreWallet.getWalletClient(targetCoreChain);
     if (!walletClient) {
       setWriteError('Core wallet client unavailable.');
-      return;
+      return null;
     }
 
-    setIsArmingCoreApproval(true);
+    const publicClient = coreWallet.getPublicClient(targetCoreChain);
+    return {
+      account: normalizedCoreAddress,
+      publicClient,
+      walletClient,
+    };
+  }
+
+  async function runCoreCrossSpaceAction(
+    actionLabel: string,
+    pendingLabel: string,
+    successLabel: string,
+    action: (context: NonNullable<Awaited<ReturnType<typeof getReadyCoreContext>>>) => Promise<Hex>,
+  ) {
+    const coreContext = await getReadyCoreContext();
+    if (!coreContext) {
+      return false;
+    }
+
+    setIsCoreActionPending(true);
     setWriteError('');
+    setStatus(pendingLabel);
 
     try {
-      const expiresAt = Date.now() + CORE_APPROVAL_WINDOW_MS;
-      const nonce = typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}`;
-      const message = [
-        'CFX DevKit Dual-Space Control',
-        'Action: increment',
-        `Contract: ${contract.address}`,
-        `eSpace Chain ID: ${targetChainId}`,
-        `Core Chain ID: ${targetCoreChain.coreChainId}`,
-        `Core Signer: ${normalizedCoreAddress}`,
-        `Expires At: ${new Date(expiresAt).toISOString()}`,
-        `Nonce: ${nonce}`,
-      ].join('\n');
+      const hash = await action(coreContext);
+      setLastCoreExecution(null);
+      setStatus('Waiting for Core finality...');
 
-      const signature = await walletClient.signMessage({
-        account: normalizedCoreAddress,
-        message,
+      const receipt = await coreContext.publicClient.waitForTransactionReceipt({
+        hash,
+        timeout: 90_000,
       });
 
-      const recoveredHexSigner = await recoverMessageAddress({ message, signature });
-      const recoveredUserHexSigner = toCoreUserHexAddress(recoveredHexSigner);
-      const recoveredSigner = normalizeCoreAddressForChain(recoveredUserHexSigner, targetCoreChain.coreChainId);
-      const libraryVerified = recoveredSigner != null && recoveredSigner.toLowerCase() === normalizeCoreAddressForChain(recoveredHexSigner, targetCoreChain.coreChainId)?.toLowerCase();
-      const adjustedVerified = !!recoveredSigner && recoveredSigner.toLowerCase() === normalizedCoreAddress.toLowerCase();
-
-      logCoreAuthorizationDebug({
-        contractAddress: contract.address,
-        targetEspaceChainId: targetChainId,
-        targetCoreChainId: targetCoreChain.coreChainId,
-        expectedCoreSigner: normalizedCoreAddress,
-        recoveredHexSigner,
-        recoveredUserHexSigner,
-        recoveredCoreSigner: recoveredSigner,
-        signature,
-        message,
-        libraryVerified,
-        adjustedVerified,
-      });
-
-      if (!adjustedVerified) {
-        throw new Error(
-          [
-            'Core signature verification failed.',
-            `Expected signer: ${normalizedCoreAddress}`,
-            `Recovered signer: ${recoveredSigner ?? recoveredUserHexSigner}`,
-            'Open the browser console and inspect the [dual-space-demo] Core authorization check group for the full payload.',
-          ].join(' '),
-        );
+      if (receipt.outcomeStatus !== 'success') {
+        throw new Error(`Core transaction ${receipt.outcomeStatus}.`);
       }
 
-      setCoreApproval({
-        action: 'increment',
-        expiresAt,
-        message,
-        signature,
-        signer: recoveredSigner,
+      setLastCoreExecution({
+        action: actionLabel,
+        hash,
+        outcomeStatus: receipt.outcomeStatus,
       });
-      setStatus('Core authorization armed. Execute on eSpace before it expires.');
+      setStatus(successLabel);
+      await Promise.all([refetchCounterValue(), refetchLockInfo()]);
+      return true;
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Core authorization failed';
+      const message = err instanceof Error ? err.message : 'Core cross-space transaction failed';
       setWriteError(message);
       setStatus('');
+      return false;
     } finally {
-      setIsArmingCoreApproval(false);
+      setIsCoreActionPending(false);
     }
   }
 
-  async function executeCoreControlledIncrement() {
-    if (!isCoreApprovalActive) {
-      setWriteError('Arm the increment from Core first.');
+  async function incrementFromCore() {
+    if (!contract) return;
+
+    const eSpaceCalldata = encodeFunctionData({
+      abi: exampleCounterAbi,
+      functionName: 'increment',
+    });
+
+    return runCoreCrossSpaceAction(
+      'Core increment',
+      'Submitting Core -> eSpace increment...',
+      'Core increment finalized.',
+      ({ account, walletClient }) => walletClient.sendTransaction({
+        account,
+        to: crossSpaceCallCoreAddress,
+        data: encodeFunctionData({
+          abi: CROSS_SPACE_CALL_ABI,
+          functionName: 'callEVM',
+          args: [contract.address as `0x${string}`, eSpaceCalldata],
+        }),
+      }),
+    );
+  }
+
+  async function bridgeCfxFromCore() {
+    if (!walletAddress) {
+      setWriteError('Connect the eSpace wallet before bridging CFX from Core.');
       return;
     }
 
-    const success = await increment();
-    if (success) {
-      setCoreApproval(null);
-    }
+    return runCoreCrossSpaceAction(
+      'Core bridge',
+      `Bridging ${CORE_BRIDGE_AMOUNT_CFX} CFX to eSpace...`,
+      `Bridged ${CORE_BRIDGE_AMOUNT_CFX} CFX to eSpace.`,
+      ({ account, walletClient }) => walletClient.sendTransaction({
+        account,
+        to: crossSpaceCallCoreAddress,
+        data: encodeFunctionData({
+          abi: CROSS_SPACE_CALL_ABI,
+          functionName: 'transferEVM',
+          args: [walletAddress],
+        }),
+        value: parseEther(CORE_BRIDGE_AMOUNT_CFX),
+      }),
+    );
   }
 
-  const busy = isWriting || isConfirming;
+  const busy = isWriting || isConfirming || isCoreActionPending;
 
   return (
     <div className="flex flex-col gap-6">
@@ -438,9 +431,9 @@ export function ExampleContract() {
             <div className="grid gap-4 lg:grid-cols-3">
               <div className="flex flex-col gap-4 rounded-2xl border border-accent/10 bg-accent/5 p-6 backdrop-blur-md">
                 <div>
-                  <div className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-accent/50 italic">Core Authorization</div>
+                  <div className="mb-1 text-[8px] font-black uppercase tracking-[0.2em] text-accent/50 italic">Core Cross-Space</div>
                   <p className="text-[10px] leading-5 text-text-secondary/65">
-                    Core cannot submit the eSpace transaction directly. For this demo, Core signs the intent and eSpace executes the write.
+                    This path uses the native CrossSpaceCall precompile so Fluent can drive the eSpace counter or bridge CFX without a backend handoff.
                   </p>
                 </div>
                 <div className="space-y-2">
@@ -453,32 +446,36 @@ export function ExampleContract() {
                     <span className="font-mono text-xs text-text-primary">{targetCoreChain.label}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Approval</span>
-                    <span className={`font-mono text-xs ${isCoreApprovalActive ? 'text-success' : 'text-text-primary'}`}>
-                      {isCoreApprovalActive ? 'Armed' : 'Idle'}
-                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Route</span>
+                    <span className="font-mono text-xs text-text-primary">Core → CrossSpaceCall → eSpace</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4 border-b border-white/5 py-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Bridge Target</span>
+                    <span className="font-mono text-xs text-text-primary">{walletAddress ? `${walletAddress.slice(0, 8)}…${walletAddress.slice(-6)}` : 'Connect eSpace wallet'}</span>
                   </div>
                   <div className="flex items-center justify-between gap-4 py-2">
-                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Window</span>
-                    <span className="font-mono text-xs text-text-primary">{coreApproval ? formatRemainingWindow(coreApproval.expiresAt) : '3:00'}</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.18em] text-text-secondary/45">Last Core Tx</span>
+                    <span className={`font-mono text-xs ${lastCoreExecution?.outcomeStatus === 'success' ? 'text-success' : 'text-text-primary'}`}>
+                      {formatShortHash(lastCoreExecution?.hash ?? null)}
+                    </span>
                   </div>
                 </div>
                 <div className="mt-auto grid gap-2">
                   <button
                     type="button"
-                    onClick={() => void armCoreIncrement()}
-                    disabled={busy || isArmingCoreApproval || !coreWallet.isConnected || coreWallet.isSwitching}
+                    onClick={() => void incrementFromCore()}
+                    disabled={busy || !coreWallet.isConnected || coreWallet.isSwitching}
                     className="btn btn-secondary !h-10 !text-[9px] font-black uppercase tracking-[0.2em]"
                   >
-                    {isArmingCoreApproval ? 'Awaiting Core Signature...' : isCoreApprovalActive ? 'Re-arm Core Intent' : 'Arm Increment From Core'}
+                    {isCoreActionPending ? 'Awaiting Core Confirmation...' : 'Increment From Core'}
                   </button>
                   <button
                     type="button"
-                    onClick={() => void executeCoreControlledIncrement()}
-                    disabled={busy || !isCoreApprovalActive}
+                    onClick={() => void bridgeCfxFromCore()}
+                    disabled={busy || !coreWallet.isConnected || coreWallet.isSwitching || !walletAddress}
                     className="btn btn-primary !h-10 !text-[9px] font-black uppercase tracking-[0.2em]"
                   >
-                    {busy ? 'Processing...' : 'Execute Armed Increment'}
+                    {isCoreActionPending ? 'Processing...' : `Bridge ${CORE_BRIDGE_AMOUNT_CFX} CFX To eSpace`}
                   </button>
                 </div>
               </div>
@@ -535,7 +532,6 @@ export function ExampleContract() {
             </div>
           )}
 
-          {/* Status Feedback */}
           {status && (
             <div className="px-4 py-2 rounded-xl bg-accent/5 border border-accent/10 animate-fade-in flex items-center gap-2">
               <div className="h-1 w-1 rounded-full bg-accent animate-pulse shadow-[0_0_5px_currentColor]" />
@@ -547,10 +543,10 @@ export function ExampleContract() {
               <p className="text-error/60 text-[8px] font-black uppercase italic tracking-tight">Error: {writeError.slice(0, 100)}</p>
             </div>
           )}
-          {coreApproval && isCoreApprovalActive ? (
+          {lastCoreExecution ? (
             <div className="px-4 py-2 rounded-xl bg-success/5 border border-success/10 animate-fade-in">
               <p className="text-success/70 text-[8px] font-black uppercase italic tracking-tight">
-                Core authorization active from {coreApproval.signer.slice(0, 15)}… until {new Date(coreApproval.expiresAt).toLocaleTimeString()}.
+                {lastCoreExecution.action} finalized through Core tx {formatShortHash(lastCoreExecution.hash)} with outcome {lastCoreExecution.outcomeStatus}.
               </p>
             </div>
           ) : null}
