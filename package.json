@@ -1,6 +1,6 @@
 {
   "name": "devkit-workspace-web",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "private": true,
   "description": "CFX DevKit — self-contained code-server image with Conflux blockchain devtools",
   "scripts": {

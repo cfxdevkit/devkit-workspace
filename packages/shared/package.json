@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/shared",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Shared typed HTTP client and utilities for CFX DevKit tools",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
