@@ -1,0 +1,54 @@
+# CFX DevKit Web
+#
+# Single self-contained image: code-server + Node 22 + Docker CLI +
+# conflux-devkit + all @cfxdevkit packages.
+#
+# Usage:
+#   docker compose up -d          # start
+#   docker compose down           # stop (data preserved in volumes)
+#   docker compose up -d --build  # rebuild after Dockerfile changes
+#
+# Open http://localhost:8080 in your browser — no VS Code install needed.
+
+services:
+  devkit-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cfxdevkit/devkit-workspace-web:latest
+    container_name: devkit-web
+    restart: unless-stopped
+    network_mode: host
+
+    volumes:
+      # DooD: mount host container runtime socket.
+      # Set DOCKER_SOCKET in your shell or .env file:
+      #   Docker (default):        DOCKER_SOCKET=/var/run/docker.sock
+      #   Podman rootless:         DOCKER_SOCKET=/run/user/1000/podman/podman.sock
+      #   Podman rootful:          DOCKER_SOCKET=/run/podman/podman.sock
+      - ${DOCKER_SOCKET:-/var/run/docker.sock}:/var/run/docker.sock
+
+      # Persist home dir: code-server settings, conflux-devkit keystore, chain data.
+      - devkit-home:/home/node
+
+      # ── Mount your project folder (choose one approach) ──────────────────
+      # Option A — bind-mount a specific host directory:
+      # - /path/to/your/project:/workspace
+      #
+      # Option B — override the workspace path via env var:
+      # environment:
+      #   WORKSPACE: /workspace
+      # - /path/to/your/project:/workspace
+
+    environment:
+      DOCKER_HOST: unix:///var/run/docker.sock
+      # WORKSPACE: /workspace  # override: uncomment + bind-mount a project to /workspace
+
+      # GitHub Copilot auth — pass a GitHub PAT (repo scope) from the host:
+      #   export GITHUB_TOKEN=ghp_...
+      # code-server picks it up so Copilot authenticates automatically.
+      # opencode auth login → select 'GitHub Copilot' also uses this token.
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+
+volumes:
+  devkit-home:

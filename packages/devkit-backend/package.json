@@ -1,0 +1,46 @@
+{
+  "name": "@cfxdevkit/devkit-backend",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Vendored conflux-devkit backend for local refinement and upstream backporting",
+  "bin": {
+    "conflux-devkit-local": "./dist/cli.js"
+  },
+  "main": "./dist/cli.js",
+  "files": [
+    "dist/**/*",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "type-check": "tsc --noEmit",
+    "typecheck": "tsc -p ./ --noEmit"
+  },
+  "dependencies": {
+    "@cfxdevkit/shared": "workspace:*",
+    "@xcfx/node": "0.8.0",
+    "cive": "^0.8.1",
+    "compression": "^1.7.5",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "open": "^10.1.2",
+    "socket.io": "^4.8.1",
+    "viem": "^2.43.3"
+  },
+  "devDependencies": {
+    "@cfxdevkit/compiler": "^1.2.5",
+    "@cfxdevkit/contracts": "^1.2.5",
+    "@cfxdevkit/core": "^1.2.5",
+    "@cfxdevkit/devnode": "^1.2.5",
+    "@cfxdevkit/protocol": "^1.2.5",
+    "@cfxdevkit/services": "^1.2.5",
+    "@types/compression": "^1.7.5",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.1",
+    "@types/node": "^20.0.0",
+    "tsup": "^8.5.1",
+    "typescript": "^5.7.3"
+  },
+  "license": "Apache-2.0"
+}

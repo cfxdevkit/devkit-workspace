@@ -1,0 +1,17 @@
+{
+  "workbench.colorTheme": "Default Dark Modern",
+  "workbench.preferredDarkColorTheme": "Default Dark Modern",
+  "window.autoDetectColorScheme": false,
+  "chat.disableAIFeatures": true,
+  "chat.commandCenter.enabled": false,
+  "chat.experimental.offerSetup": false,
+  "workbench.secondarySideBar.defaultVisibility": "hidden",
+  "workbench.startupEditor": "none",
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  "telemetry.telemetryLevel": "off",
+  "update.mode": "none",
+  "remote.autoForwardPorts": false,
+  "remote.autoForwardPortsSource": "output",
+  "devkit.devPort": 3001
+}

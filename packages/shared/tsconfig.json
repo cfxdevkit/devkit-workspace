@@ -1,0 +1,9 @@
+{
+  "extends": "../../tsconfig.profile.node-cjs.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "declarationMap": true
+  },
+  "include": ["src/**/*"]
+}

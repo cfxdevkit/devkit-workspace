@@ -1,0 +1,34 @@
+{
+  "name": "@cfxdevkit/dex-contracts",
+  "version": "0.1.0",
+  "description": "Compiled Uniswap V2 contracts and mock tokens for CFX DevKit DEX",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./generated/index.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "postinstall": "bash scripts/patch-uniswap.sh",
+    "compile": "hardhat compile --config hardhat.config.cts",
+    "export": "node scripts/export-artifacts.cjs && node scripts/codegen.mjs",
+    "build": "pnpm compile && pnpm export && tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.6"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^5.0.0",
+    "@uniswap/lib": "4.0.1-alpha",
+    "@uniswap/v2-core": "1.0.1",
+    "@uniswap/v2-periphery": "1.1.0-beta.0",
+    "hardhat": "^2.22.0",
+    "typescript": "^5.3.0",
+    "viem": "^2.43.3"
+  },
+  "license": "Apache-2.0"
+}

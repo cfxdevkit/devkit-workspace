@@ -1,0 +1,4 @@
+packages:
+  - 'packages/*'
+  - 'dex-ui'
+  - 'scaffolds/project-example/*'

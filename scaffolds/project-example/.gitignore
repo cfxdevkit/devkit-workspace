@@ -1,0 +1,10 @@
+node_modules/
+deploy/
+dist/
+dist-server/
+*.log
+.env.local
+
+# Generated contract artifacts (recreated by pnpm codegen)
+contracts/generated/
+dapp/src/generated/

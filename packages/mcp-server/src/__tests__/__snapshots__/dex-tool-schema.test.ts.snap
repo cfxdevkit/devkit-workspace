@@ -1,0 +1,403 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`dex tool schema snapshots > keeps stable tool names and input schemas 1`] = `
+[
+  {
+    "description": "Check the Uniswap V2 DEX status on the local eSpace node. Returns whether the V2 stack is deployed, contract addresses from the DEX service, and live on-chain pair count from factory.allPairsLength(). Run dex_deploy first if status shows "not deployed".",
+    "inputSchema": {
+      "properties": {
+        "chainId": {
+          "description": "eSpace chain ID (default: 2030)",
+          "type": "number",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL (default: http://localhost:8545)",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "dex_status",
+  },
+  {
+    "description": "Deploy a full Uniswap V2 DEX stack to the local Conflux eSpace node. Deploys contracts in order: UniswapV2Factory → WETH9 → UniswapV2Router02. All contracts are tracked in the devkit contract registry and the DEX service in-memory state. Uses pre-compiled artifacts from packages/contracts/artifacts/ — run \`cd packages/contracts && pnpm build\` if artifacts are missing. The node must be running (use conflux_status + conflux_node_start first).",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Deployer account index from keystore (default: 0)",
+          "type": "number",
+        },
+        "chainId": {
+          "description": "eSpace chain ID (default: 2030)",
+          "type": "number",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL (default: http://localhost:8545)",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "dex_deploy",
+  },
+  {
+    "description": "Fetch selected source pools from GeckoTerminal using the generated known-token catalog, deploy MirrorERC20 tokens on the local devnet for each imported token, and seed TOKEN/WCFX Uniswap V2 pools with realistic reserve ratios derived from the chosen source pools. Requires dex_deploy to have been run first. Idempotent — already-mirrored tokens are reused, only addLiquidity is re-called. If selectedPoolAddresses is omitted, dex-ui/public/pool-import-presets.json is used. Translation table (real mainnet → local mirror addresses) stored in DEX service.",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Deployer account index from keystore (default: 0)",
+          "type": "number",
+        },
+        "chainId": {
+          "description": "eSpace chain ID (default: 2030)",
+          "type": "number",
+        },
+        "forceRefresh": {
+          "description": "Force re-fetch from GeckoTerminal even if a matching selected-pool cache is fresh (default: false)",
+          "type": "boolean",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL (default: http://localhost:8545)",
+          "type": "string",
+        },
+        "selectedPoolAddresses": {
+          "description": "Explicit GeckoTerminal pool addresses to import. Defaults to dex-ui/public/pool-import-presets.json when omitted.",
+          "items": {
+            "type": "string",
+          },
+          "type": "array",
+        },
+        "selectedStablecoins": {
+          "description": "Explicit list of stablecoin symbols to deploy/seed. Available: USDT0, AxCNH, USDT, USDC. Defaults to all when omitted.",
+          "items": {
+            "type": "string",
+          },
+          "type": "array",
+        },
+      },
+      "type": "object",
+    },
+    "name": "dex_seed_from_gecko",
+  },
+  {
+    "description": "Execute a single simulation tick — advance one candle per token, compute smoothed VWAP price, and rebalance pools where price deviation exceeds the minimum threshold. Requires dex_seed_from_gecko to have been run first (pools must be seeded). The engine is auto-created on first call if not already initialized. Returns per-token rebalance results and overall progress.",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Account index for swap execution (default: 0)",
+          "type": "number",
+        },
+        "chainId": {
+          "description": "eSpace chain ID (default: 2030)",
+          "type": "number",
+        },
+        "minDeviationBps": {
+          "description": "Min price change in bps to trigger rebalance (default: 50)",
+          "type": "number",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL (default: http://localhost:8545)",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "dex_simulation_step",
+  },
+  {
+    "description": "Start continuous price simulation — auto-advances candles at the configured tick interval. Each tick processes one OHLCV candle per token, computes rolling VWAP, and executes swaps to move pool prices toward the target. Requires seeded pools (dex_seed_from_gecko). Returns immediately; use dex_simulation_step or dex_status to check progress. Call dex_simulation_stop to halt.",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Account index for swap execution (default: 0)",
+          "type": "number",
+        },
+        "chainId": {
+          "description": "eSpace chain ID (default: 2030)",
+          "type": "number",
+        },
+        "minDeviationBps": {
+          "description": "Min price change in bps to trigger rebalance (default: 50)",
+          "type": "number",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL (default: http://localhost:8545)",
+          "type": "string",
+        },
+        "tickIntervalMs": {
+          "description": "Milliseconds between ticks. 0 = max speed, 5000 = demo mode (default: 2000)",
+          "type": "number",
+        },
+      },
+      "type": "object",
+    },
+    "name": "dex_simulation_start",
+  },
+  {
+    "description": "Stop the continuous price simulation loop. The engine state is preserved — you can resume with dex_simulation_start or step manually with dex_simulation_step.",
+    "inputSchema": {
+      "properties": {},
+      "type": "object",
+    },
+    "name": "dex_simulation_stop",
+  },
+  {
+    "description": "Reset the simulation engine to its post-seed state. Reverts the EVM snapshot taken after seeding (all swap/rebalance history is undone). Candle indices are reset to 0 so the simulation can replay from the beginning.",
+    "inputSchema": {
+      "properties": {},
+      "type": "object",
+    },
+    "name": "dex_simulation_reset",
+  },
+  {
+    "description": "Deploy a new ERC-20 token (MirrorERC20) on the local eSpace node. Mints an initial supply to the deployer account. The token is tracked in .devkit-contracts.json. Useful for creating custom tokens before adding them to liquidity pools via dex_create_pair.",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Deployer account index from keystore (default: 0)",
+          "type": "number",
+        },
+        "chainId": {
+          "description": "eSpace chain ID (default: 2030)",
+          "type": "number",
+        },
+        "decimals": {
+          "description": "Token decimals (default: 18)",
+          "type": "number",
+        },
+        "initialSupply": {
+          "description": "Initial supply in human units minted to deployer (default: "1000000")",
+          "type": "string",
+        },
+        "name": {
+          "description": "Token name (e.g. "My Token")",
+          "type": "string",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL (default: http://localhost:8545)",
+          "type": "string",
+        },
+        "symbol": {
+          "description": "Token symbol (e.g. "MTK")",
+          "type": "string",
+        },
+      },
+      "required": [
+        "name",
+        "symbol",
+      ],
+      "type": "object",
+    },
+    "name": "dex_create_token",
+  },
+  {
+    "description": "Create a Uniswap V2 liquidity pair and add initial liquidity. If tokenB is omitted, pairs with WCFX (native CFX, wrapped via addLiquidityETH). The pair is created via the factory if it does not exist. Tokens must be deployed and the deployer must have sufficient balances. Requires dex_deploy to have been run first.",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Account index from keystore (default: 0)",
+          "type": "number",
+        },
+        "amountA": {
+          "description": "Amount of token A in human units (e.g. "10000")",
+          "type": "string",
+        },
+        "amountB": {
+          "description": "Amount of token B in human units (e.g. "5000"). For WCFX pairs, this is CFX amount.",
+          "type": "string",
+        },
+        "chainId": {
+          "description": "eSpace chain ID (default: 2030)",
+          "type": "number",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL (default: http://localhost:8545)",
+          "type": "string",
+        },
+        "tokenA": {
+          "description": "Token A address (0x...)",
+          "type": "string",
+        },
+        "tokenB": {
+          "description": "Token B address (0x...). Omit or set to "WCFX" to pair with native CFX.",
+          "type": "string",
+        },
+      },
+      "required": [
+        "tokenA",
+        "amountA",
+        "amountB",
+      ],
+      "type": "object",
+    },
+    "name": "dex_create_pair",
+  },
+  {
+    "description": "Add liquidity to an existing Uniswap V2 pair. If tokenB is omitted or "WCFX", adds liquidity via addLiquidityETH. Requires the pair to already exist (use dex_create_pair first). The deployer must have sufficient token balances and approvals are handled automatically.",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Account index (default: 0)",
+          "type": "number",
+        },
+        "amountA": {
+          "description": "Amount of token A in human units",
+          "type": "string",
+        },
+        "amountB": {
+          "description": "Amount of token B in human units (CFX if WCFX)",
+          "type": "string",
+        },
+        "chainId": {
+          "description": "eSpace chain ID",
+          "type": "number",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL",
+          "type": "string",
+        },
+        "tokenA": {
+          "description": "Token A address (0x...)",
+          "type": "string",
+        },
+        "tokenB": {
+          "description": "Token B address or "WCFX" (default: WCFX)",
+          "type": "string",
+        },
+      },
+      "required": [
+        "tokenA",
+        "amountA",
+        "amountB",
+      ],
+      "type": "object",
+    },
+    "name": "dex_add_liquidity",
+  },
+  {
+    "description": "Remove liquidity from a Uniswap V2 pair. Burns LP tokens to receive underlying tokens. If tokenB is "WCFX" or omitted, uses removeLiquidityETH to receive native CFX. The lpAmount is in human units of the LP token (18 decimals).",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Account index (default: 0)",
+          "type": "number",
+        },
+        "chainId": {
+          "description": "eSpace chain ID",
+          "type": "number",
+        },
+        "lpAmount": {
+          "description": "LP token amount to burn in human units (18 decimals)",
+          "type": "string",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL",
+          "type": "string",
+        },
+        "tokenA": {
+          "description": "Token A address (0x...)",
+          "type": "string",
+        },
+        "tokenB": {
+          "description": "Token B address or "WCFX" (default: WCFX)",
+          "type": "string",
+        },
+      },
+      "required": [
+        "tokenA",
+        "lpAmount",
+      ],
+      "type": "object",
+    },
+    "name": "dex_remove_liquidity",
+  },
+  {
+    "description": "Execute a token swap on the Uniswap V2 Router. Supports TOKEN→TOKEN, CFX→TOKEN, and TOKEN→CFX. If tokenIn is "WCFX" or "CFX", sends native CFX (swapExactETHForTokens). If tokenOut is "WCFX" or "CFX", receives native CFX (swapExactTokensForETH). Returns the amounts received.",
+    "inputSchema": {
+      "properties": {
+        "accountIndex": {
+          "description": "Account index (default: 0)",
+          "type": "number",
+        },
+        "amountIn": {
+          "description": "Input amount in human units",
+          "type": "string",
+        },
+        "chainId": {
+          "description": "eSpace chain ID",
+          "type": "number",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL",
+          "type": "string",
+        },
+        "slippage": {
+          "description": "Max slippage in % (default: 1.0)",
+          "type": "number",
+        },
+        "tokenIn": {
+          "description": "Input token address or "CFX"/"WCFX" for native",
+          "type": "string",
+        },
+        "tokenOut": {
+          "description": "Output token address or "CFX"/"WCFX" for native",
+          "type": "string",
+        },
+      },
+      "required": [
+        "tokenIn",
+        "tokenOut",
+        "amountIn",
+      ],
+      "type": "object",
+    },
+    "name": "dex_swap",
+  },
+  {
+    "description": "Get detailed information about a specific liquidity pool (pair). Returns reserves, price, LP token supply, and token details. Accepts either a pair address or two token addresses to look up the pair.",
+    "inputSchema": {
+      "properties": {
+        "chainId": {
+          "description": "eSpace chain ID",
+          "type": "number",
+        },
+        "pairAddress": {
+          "description": "Direct pair address (0x...)",
+          "type": "string",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL",
+          "type": "string",
+        },
+        "tokenA": {
+          "description": "Token A address (alternative to pairAddress)",
+          "type": "string",
+        },
+        "tokenB": {
+          "description": "Token B address (alternative to pairAddress)",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "dex_pool_info",
+  },
+  {
+    "description": "List all Uniswap V2 pairs deployed on the local node with reserves, symbols, and prices. Returns a formatted table of all pairs from the factory.",
+    "inputSchema": {
+      "properties": {
+        "chainId": {
+          "description": "eSpace chain ID",
+          "type": "number",
+        },
+        "rpcUrl": {
+          "description": "eSpace RPC URL",
+          "type": "string",
+        },
+      },
+      "type": "object",
+    },
+    "name": "dex_list_pairs",
+  },
+]
+`;

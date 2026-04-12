@@ -1,0 +1,16 @@
+{
+  "name": "contracts",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./generated/index.ts"
+  },
+  "scripts": {
+    "build": "pnpm run compile",
+    "compile": "node scripts/compile.mjs"
+  },
+  "devDependencies": {
+    "solc": "^0.8.34"
+  },
+  "license": "Apache-2.0"
+}

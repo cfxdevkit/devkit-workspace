@@ -1,0 +1,26 @@
+{
+  "name": "conflux-workspace",
+  "version": "0.1.0",
+  "description": "Manage and launch the CFX DevKit workspace container with per-workspace persistence profiles",
+  "license": "Apache-2.0",
+  "type": "module",
+  "bin": {
+    "conflux-workspace": "./dist/cli.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "node ./scripts/sync-template.mjs && tsc -p ./ && chmod +x dist/cli.js",
+    "typecheck": "tsc -p ./ --noEmit",
+    "watch": "tsc -watch -p ./"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

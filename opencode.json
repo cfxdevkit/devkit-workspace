@@ -1,0 +1,37 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+
+  // AI provider setup: run 'opencode auth login' in a terminal once.
+  //   → Select "Zen" for free hosted models (no API key needed)
+  //   → Select "GitHub Copilot" if GITHUB_TOKEN is set
+  //
+  // Credentials are saved to ~/.config/opencode/ (persisted via devkit-home volume).
+  // Models auto-selected based on available providers.
+
+  "autoupdate": false,
+
+  "watcher": {
+    "ignore": [
+      "**/node_modules/**",
+      "**/__pycache__/**",
+      "**/.git/**"
+    ]
+  },
+
+  "permission": {
+    "bash": "ask",
+    "edit": "allow",
+    "write": "allow"
+  },
+
+  // MCP server — installed globally as devkit-mcp via npm install -g @cfxdevkit/mcp.
+  // opencode spawns this as a subprocess via StdioClientTransport.
+  // The binary is at /usr/local/bin/devkit-mcp — no absolute path or bundle needed.
+  "mcp": {
+    "devkit": {
+      "type": "local",
+      "command": ["devkit-mcp"],
+      "enabled": true
+    }
+  }
+}

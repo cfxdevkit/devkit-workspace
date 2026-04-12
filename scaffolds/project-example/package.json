@@ -1,0 +1,41 @@
+{
+  "name": "cfxdevkit-project",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "doctor": "node ./scripts/doctor.mjs",
+    "clean": "rm -rf node_modules contracts/node_modules dapp/node_modules contracts/generated dapp/src/generated dapp/dist dapp/dist-server deploy",
+    "deps:install": "pnpm install",
+    "sync:network": "node ./scripts/sync-project-network.mjs",
+    "contracts:compile": "pnpm --filter contracts compile && pnpm --filter dapp codegen",
+    "contracts:artifact": "node ./scripts/write-contract-artifact.mjs",
+    "codegen": "pnpm run contracts:compile && pnpm run contracts:artifact",
+    "deploy": "node ./scripts/deploy-contract.mjs",
+    "deploy:public": "node ./scripts/deploy-public-contract.mjs",
+    "deploy:testnet": "DEVKIT_NETWORK=testnet DEPLOY_CHAIN_ID=71 DEPLOY_RPC_URL=https://evmtestnet.confluxrpc.com node ./scripts/deploy-contract.mjs",
+    "deploy:mainnet": "DEVKIT_NETWORK=mainnet DEPLOY_CHAIN_ID=1030 DEPLOY_RPC_URL=https://evm.confluxrpc.com node ./scripts/deploy-contract.mjs",
+    "contracts:list": "node ./scripts/list-contracts.mjs",
+    "dev": "pnpm run sync:network && pnpm run codegen && pnpm --filter dapp dev:proxy",
+    "build": "pnpm run sync:network && pnpm run codegen && pnpm --filter dapp build && pnpm --filter dapp build:server",
+    "serve": "pnpm --filter dapp serve",
+    "lint": "pnpm exec biome lint .",
+    "lint:fix": "pnpm exec biome lint --write .",
+    "format": "pnpm exec biome format --write .",
+    "stack:up": "pnpm run sync:network && docker compose up -d --build",
+    "stack:rebuild": "pnpm run sync:network && docker compose up -d --build --force-recreate",
+    "stack:down": "docker compose down",
+    "stack:status": "docker compose ps",
+    "stack:logs": "docker compose logs -f dapp"
+  },
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=9"
+  },
+  "dependencies": {
+    "viem": "^2.23.0"
+  },
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.10"
+  }
+}
