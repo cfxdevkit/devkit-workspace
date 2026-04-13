@@ -159,3 +159,32 @@ jobs:
 
       - name: Verify scaffold and assembled parity
         run: pnpm run scaffold:verify
+
+  publish-edge:
+    name: Publish Edge Docker Image
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push edge image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/cfxdevkit/devkit-workspace-web:edge
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

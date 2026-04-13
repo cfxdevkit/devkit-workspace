@@ -13,7 +13,7 @@
 #
 # The devkit backend is started on every attach by post-start.sh instead.
 
-FROM ghcr.io/cfxdevkit/devkit-workspace-web:latest
+FROM ghcr.io/cfxdevkit/devkit-workspace-web:edge
 
 # Reset the entrypoint so the Dev Containers / Codespace infrastructure can
 # keep the container alive with its own process and inject VS Code Server.
