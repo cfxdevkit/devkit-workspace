@@ -1,4 +1,5 @@
 export { ConnectButton } from './components/ConnectButton';
+export { AppToaster } from './components/AppToaster';
 export { Faucet } from './components/Faucet';
 export { FaucetWidget } from './components/FaucetWidget';
 export { DevkitStatus } from './components/DevkitStatus';
