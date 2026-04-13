@@ -5,9 +5,8 @@ import { hexAddressToBase32 } from 'cive/utils';
 import { exampleCounterAbi, useReadExampleCounterValue } from '../generated/hooks';
 import { getContractAddress } from '../generated/contracts-addresses';
 import { getChainLabel } from '../chains';
-import { useAuth } from '@cfxdevkit/ui-shared';
-import { getCoreChainConfigForEspaceChain, normalizeCoreAddressForChain, useCoreWallet } from '../hooks/useCoreWallet';
 import { StatusBanner, useAuth } from '@cfxdevkit/ui-shared';
+import { getCoreChainConfigForEspaceChain, normalizeCoreAddressForChain, useCoreWallet } from '../hooks/useCoreWallet';
 import { useDevkitNetworkSync } from '../hooks/useDevkitNetwork';
 
 interface ContractEntry {

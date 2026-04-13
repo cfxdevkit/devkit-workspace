@@ -10,8 +10,8 @@ export function AppToaster() {
       theme="dark"
       visibleToasts={5}
       toastOptions={{
-        className: '!border !border-white/10 !bg-bg-secondary/95 !text-text-primary !backdrop-blur-xl',
-        descriptionClassName: '!text-text-secondary',
+        className: '!border !border-white/20 !bg-zinc-800 !text-zinc-100 !shadow-2xl',
+        descriptionClassName: '!text-zinc-300',
       }}
     />
   );

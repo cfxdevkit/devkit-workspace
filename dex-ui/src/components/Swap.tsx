@@ -234,7 +234,6 @@ export function Swap({ dex }: { dex: DexState }) {
     const router = dex.router;
     const controller = new AbortController();
     const timer = setTimeout(async () => {
-      setStatus('Quoting…');
       try {
         const amountIn = parseUnits(amount, fromToken.decimals);
         const path = await buildPath(fromToken.address, toToken.address, publicClient, dex);
@@ -344,7 +343,7 @@ export function Swap({ dex }: { dex: DexState }) {
 
       dex.refresh();
       setStatus('Swap success');
-      setTimeout(() => setStatus(''), 5000);
+      setTimeout(() => setStatus(''), 8000);
     } catch (err) {
       setStatus(`Error: ${err instanceof Error ? err.message.slice(0, 100) : 'unknown'}`);
     }

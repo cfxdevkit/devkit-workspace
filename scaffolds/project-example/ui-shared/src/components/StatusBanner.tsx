@@ -19,23 +19,25 @@ function isProgressMessage(message: ReactNode) {
 }
 
 function getDuration(tone: StatusTone) {
-  if (tone === 'error') return 6000;
-  if (tone === 'success') return 4200;
-  if (tone === 'warning') return 4600;
-  return 3200;
+  if (tone === 'error') return 8000;
+  if (tone === 'success') return 6000;
+  if (tone === 'warning') return 6000;
+  return 4000;
 }
 
 export function StatusBanner({ message, tone = 'accent', className = '', textClassName = '' }: StatusBannerProps) {
   const toastIdRef = useRef(`status-${Math.random().toString(36).slice(2, 10)}`);
 
   useEffect(() => {
+    const id = toastIdRef.current;
+
     if (message == null || message === '') {
-      toast.dismiss(toastIdRef.current);
+      toast.dismiss(id);
       return;
     }
 
     const options = {
-      id: toastIdRef.current,
+      id,
       className,
       descriptionClassName: textClassName,
       duration: isProgressMessage(message) ? Infinity : getDuration(tone),
@@ -43,26 +45,22 @@ export function StatusBanner({ message, tone = 'accent', className = '', textCla
 
     if (tone === 'success') {
       toast.success(message, options);
-      return;
-    }
-
-    if (tone === 'error') {
+    } else if (tone === 'error') {
       toast.error(message, options);
-      return;
-    }
-
-    if (tone === 'warning') {
+    } else if (tone === 'warning') {
       toast.warning(message, options);
-      return;
-    }
-
-    if (isProgressMessage(message)) {
+    } else if (isProgressMessage(message)) {
       toast.loading(message, options);
-      return;
+    } else {
+      toast(message, options);
     }
-
-    toast(message, options);
   }, [className, message, textClassName, tone]);
+
+  // Dismiss on unmount so stale Infinity-duration toasts don't persist
+  useEffect(() => {
+    const id = toastIdRef.current;
+    return () => { toast.dismiss(id); };
+  }, []);
 
   return null;
 }

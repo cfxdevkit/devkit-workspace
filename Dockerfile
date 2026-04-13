@@ -78,8 +78,11 @@ COPY packages/vscode-extension/package.json     ./packages/vscode-extension/
 COPY packages/workspace-cli/package.json        ./packages/workspace-cli/
 COPY dex-ui/package.json                        ./dex-ui/
 COPY packages/ui-shared/package.json            ./project-example/ui-shared/
-COPY scaffolds/project-example/dapp/package.json      ./project-example/dapp/
-COPY scaffolds/project-example/contracts/package.json ./project-example/contracts/
+COPY scaffolds/project-example/ui-shared/package.json   ./scaffolds/project-example/ui-shared/
+COPY scaffolds/project-example/dapp/package.json        ./scaffolds/project-example/dapp/
+COPY scaffolds/project-example/dapp/package.json        ./project-example/dapp/
+COPY scaffolds/project-example/contracts/package.json   ./scaffolds/project-example/contracts/
+COPY scaffolds/project-example/contracts/package.json   ./project-example/contracts/
 RUN --mount=type=cache,id=pnpm-builder-store,target=/pnpm/store,sharing=locked \
      pnpm install --frozen-lockfile 2>/dev/null || pnpm install --no-frozen-lockfile
 
