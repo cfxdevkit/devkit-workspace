@@ -28,23 +28,21 @@ RUN chmod +x /opt/devkit/.devcontainer/post-start.sh
 
 # Pre-install the devkit VS Code extension for native VS Code remote / Codespace.
 #
-# `code --install-extension` is unavailable in non-interactive lifecycle scripts
-# because the VS Code Server CLI wrapper is only injected into the user's shell
-# profile, which /bin/sh does not load.
-#
-# Solution: a VSIX is a ZIP file — extract it directly into the VS Code Server
-# extensions directory. VS Code Server picks up any directory under
-# ~/.vscode-server/extensions/<publisher>.<name>-<version>/ on connect.
-# `jq` is already present in the base image.
-RUN apt-get update && apt-get install -y --no-install-recommends unzip \
- && rm -rf /var/lib/apt/lists/* \
+# code-server and VS Code Server share the exact same extension directory layout:
+#   <publisher>.<name>-<version>/  (with package.json at the root level)
+# The extension is already installed by code-server into the base image at
+# /home/node/.local/share/code-server/extensions/. Copy that directory directly
+# instead of extracting the VSIX — no `unzip` needed and no dependency on
+# /opt/devkit/devkit.vsix being present in the base image.
+RUN set -e \
+ && EXT_SRC=$(ls -d /home/node/.local/share/code-server/extensions/local.cfxdevkit-workspace-ext-* 2>/dev/null | head -1) \
+ && if [ -z "$EXT_SRC" ]; then \
+      echo "ERROR: devkit extension not found in code-server extensions dir"; \
+      exit 1; \
+    fi \
+ && EXT_NAME=$(basename "$EXT_SRC") \
  && mkdir -p /home/node/.vscode-server/extensions \
- && cp /opt/devkit/devkit.vsix /tmp/devkit.vsix \
- && cd /tmp && unzip -q devkit.vsix -d devkit-vsix \
- && PUBLISHER=$(jq -r '.publisher' devkit-vsix/extension/package.json) \
- && NAME=$(jq -r '.name' devkit-vsix/extension/package.json) \
- && VERSION=$(jq -r '.version' devkit-vsix/extension/package.json) \
- && mv devkit-vsix/extension "/home/node/.vscode-server/extensions/${PUBLISHER}.${NAME}-${VERSION}" \
+ && cp -r "$EXT_SRC" "/home/node/.vscode-server/extensions/${EXT_NAME}" \
  && chown -R node:node /home/node/.vscode-server \
- && rm -rf /tmp/devkit-vsix /tmp/devkit.vsix
+ && echo "[devkit] Pre-installed extension: ${EXT_NAME}"
 
