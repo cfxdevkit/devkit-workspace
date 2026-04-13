@@ -5,9 +5,12 @@
 # 1. Fixes Docker socket group ownership so docker commands work.
 # 2. Starts the devkit backend as a background service.
 #
-# NOTE: Extension registration is handled by postAttachCommand in devcontainer.json.
-# The `code` CLI is only available after VS Code Server attaches to the container;
-# it is not in PATH during postStartCommand (which runs before VS Code connects).
+# The devkit VS Code extension does NOT need to be installed here — the
+# Dockerfile pre-seeds it into /home/node/.vscode-server/extensions/ so
+# VS Code Server picks it up automatically on startup (no reload required).
+#
+# The backend is launched with setsid+disown so it survives when
+# postStartCommand's shell process group is cleaned up by the Codespace runner.
 #
 # Used only in the devcontainer / Codespace environment where the image
 # entrypoint is overridden to `sleep infinity` so VS Code Server can run.
@@ -51,8 +54,12 @@ fi
 
 nohup devkit-backend --no-open --host 0.0.0.0 --port "$BACKEND_PORT" \
     >> "$LOG_FILE" 2>&1 < /dev/null &
+BACKEND_PID=$!
+# Fully detach the background process from this shell's job table so it
+# survives when postStartCommand's shell process group is cleaned up.
+disown "$BACKEND_PID"
 
-echo "[devkit] Backend starting on :${BACKEND_PORT} (log: $LOG_FILE)"
+echo "[devkit] Backend starting on :${BACKEND_PORT} (PID: $BACKEND_PID, log: $LOG_FILE)"
 
 # Wait up to 20 seconds for it to become healthy
 for _ in $(seq 1 40); do

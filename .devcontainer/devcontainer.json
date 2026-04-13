@@ -37,13 +37,13 @@
   ],
 
   // postStartCommand: runs on every container start, before VS Code Server attaches.
-  // Handles Docker socket fix and backend startup. The `code` CLI is NOT available here.
+  // Handles Docker socket GID fix and backend startup.
+  //
+  // The devkit VS Code extension does NOT need to be installed here or in
+  // postAttachCommand — the Dockerfile already pre-seeds it into
+  // /home/node/.vscode-server/extensions/ so VS Code Server picks it up
+  // automatically on startup without any reload prompt.
   "postStartCommand": "bash /opt/devkit/.devcontainer/post-start.sh",
-
-  // postAttachCommand: runs after VS Code Server attaches to the container.
-  // The `code` CLI IS available here. Installs/re-registers the devkit extension.
-  // Without --force: no-op if already registered at same version (no reload prompt).
-  "postAttachCommand": "command -v code && code --install-extension /opt/devkit/devkit.vsix || true",
 
   // Forward all ports that devkit services listen on so they are reachable
   // from the browser / local machine via VS Code port forwarding.
