@@ -43,12 +43,6 @@
   "init": true,
   "overrideCommand": false,
 
-  // After attach, force a one-time same-version VSIX install so VS Code shows
-  // its native "Reload required" notification when the pre-seeded extension
-  // was not picked up by the first browser session. This is gated by a
-  // version-specific marker so it only prompts once per extension version.
-  "postAttachCommand": "bash /opt/devkit/.devcontainer/post-attach.sh",
-
   // Forward all ports that devkit services listen on so they are reachable
   // from the browser / local machine via VS Code port forwarding.
   "forwardPorts": [3030, 7748, 8545, 8546, 8888, 12537, 12535],

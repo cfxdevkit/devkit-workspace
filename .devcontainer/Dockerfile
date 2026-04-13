@@ -21,9 +21,7 @@ CMD ["sleep", "infinity"]
 # Bake in the devcontainer helper scripts so the entrypoint can reference them
 # via absolute image paths regardless of whether the repository folder is mounted.
 COPY --chown=node:node entrypoint.sh /opt/devkit/.devcontainer/entrypoint.sh
-COPY --chown=node:node post-attach.sh /opt/devkit/.devcontainer/post-attach.sh
 RUN chmod +x /opt/devkit/.devcontainer/entrypoint.sh
-RUN chmod +x /opt/devkit/.devcontainer/post-attach.sh
 
 # Pre-install the devkit VS Code extension for native VS Code remote / Codespace.
 #
