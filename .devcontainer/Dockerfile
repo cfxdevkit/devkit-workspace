@@ -6,25 +6,22 @@
 #
 # The only change vs the standalone image is the entrypoint:
 #   - Standalone image: entrypoint starts code-server (browser IDE on :8080)
-#   - Devcontainer:     entrypoint is reset so VS Code remote / Codespace can
-#                       inject its own VS Code Server, which provides the native
-#                       VS Code interface in both the browser (Codespaces) and
-#                       local VS Code (Dev Containers extension).
-#
-# The devkit backend is started on every attach by post-start.sh instead.
+#   - Devcontainer:     entrypoint starts the devkit backend, then execs the
+#                       command injected by VS Code remote / Codespaces so the
+#                       native VS Code interface can attach normally.
 
 FROM ghcr.io/cfxdevkit/devkit-workspace-web:edge
 
-# Reset the entrypoint so the Dev Containers / Codespace infrastructure can
-# keep the container alive with its own process and inject VS Code Server.
-ENTRYPOINT []
+# Replace the code-server entrypoint with a small wrapper that starts the
+# backend service, then hands off to the command provided by the devcontainer
+# runtime.
+ENTRYPOINT ["/opt/devkit/.devcontainer/entrypoint.sh"]
 CMD ["sleep", "infinity"]
 
-# Bake in the devcontainer helper scripts so postStartCommand can reference
-# them via their absolute image path (/opt/devkit/.devcontainer/post-start.sh)
-# regardless of whether the repository folder is mounted.
-COPY --chown=node:node post-start.sh /opt/devkit/.devcontainer/post-start.sh
-RUN chmod +x /opt/devkit/.devcontainer/post-start.sh
+# Bake in the devcontainer helper scripts so the entrypoint can reference them
+# via absolute image paths regardless of whether the repository folder is mounted.
+COPY --chown=node:node entrypoint.sh /opt/devkit/.devcontainer/entrypoint.sh
+RUN chmod +x /opt/devkit/.devcontainer/entrypoint.sh
 
 # Pre-install the devkit VS Code extension for native VS Code remote / Codespace.
 #

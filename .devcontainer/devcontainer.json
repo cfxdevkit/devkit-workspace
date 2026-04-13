@@ -6,12 +6,14 @@
   //   • Local VS Code     — Dev Containers extension (requires Docker Desktop or Podman)
   //
   // Builds from .devcontainer/Dockerfile which extends the pre-built workspace image
-  // but resets the entrypoint so VS Code Server can take over instead of code-server.
+  // and replaces the code-server entrypoint with a lightweight wrapper that
+  // starts the backend before handing control to the command injected by
+  // Codespaces / Dev Containers.
   //
-  // On first create:
-  //   - The devkit VS Code extension is installed into the native VS Code remote server.
   // On every start:
-  //   - The devkit backend is started as a background service on port 7748.
+  //   - The devkit backend is started by the container entrypoint on port 7748.
+  //   - The devkit VS Code extension is already present in the remote server's
+  //     extensions directory before VS Code attaches.
   //
   // Docker socket access (DooD) is enabled so the devkit extension can manage the
   // inner Conflux devkit stack (Hardhat node, block-streaming, etc.).
@@ -36,14 +38,9 @@
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
 
-  // postStartCommand: runs on every container start, before VS Code Server attaches.
-  // Handles Docker socket GID fix and backend startup.
-  //
-  // The devkit VS Code extension does NOT need to be installed here or in
-  // postAttachCommand — the Dockerfile already pre-seeds it into
-  // /home/node/.vscode-server/extensions/ so VS Code Server picks it up
-  // automatically on startup without any reload prompt.
-  "postStartCommand": "bash /opt/devkit/.devcontainer/post-start.sh",
+  // Use a real entrypoint so the backend starts as part of container startup,
+  // not as a best-effort lifecycle hook racing with VS Code attachment.
+  "init": true,
 
   // Forward all ports that devkit services listen on so they are reachable
   // from the browser / local machine via VS Code port forwarding.
@@ -82,7 +79,7 @@
   "customizations": {
     "vscode": {
       // Marketplace extensions installed automatically.
-      // The custom devkit extension is installed via postCreateCommand above.
+      // The custom devkit extension is pre-seeded in the image.
       "extensions": [
         "sst-dev.opencode"
       ],
