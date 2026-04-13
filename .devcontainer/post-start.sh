@@ -36,12 +36,20 @@ fi
 
 mkdir -p "$LOG_DIR"
 
-if ! command -v devkit-backend >/dev/null 2>&1; then
-    echo "[devkit] ERROR: devkit-backend binary not found in PATH"
+# Resolve backend command — support both image layouts:
+#   New (current codebase): devkit-backend global binary in PATH
+#   Old (published image):  node /opt/devkit/devkit-backend/dist/cli.js
+if command -v devkit-backend >/dev/null 2>&1; then
+    BACKEND_CMD="devkit-backend"
+elif [ -f /opt/devkit/devkit-backend/dist/cli.js ]; then
+    BACKEND_CMD="node /opt/devkit/devkit-backend/dist/cli.js"
+    echo "[devkit] Using legacy backend path: /opt/devkit/devkit-backend/dist/cli.js"
+else
+    echo "[devkit] ERROR: devkit-backend not found (no binary in PATH, no /opt/devkit/devkit-backend/dist/cli.js)"
     exit 1
 fi
 
-nohup devkit-backend --no-open --host 0.0.0.0 --port "$BACKEND_PORT" \
+nohup $BACKEND_CMD --no-open --host 0.0.0.0 --port "$BACKEND_PORT" \
     >> "$LOG_FILE" 2>&1 < /dev/null &
 
 echo "[devkit] Backend starting on :${BACKEND_PORT} (log: $LOG_FILE)"
