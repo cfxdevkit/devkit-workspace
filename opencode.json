@@ -8,6 +8,10 @@
   // Credentials are saved to ~/.config/opencode/ (persisted via devkit-home volume).
   // Models auto-selected based on available providers.
 
+  // Default model when using GitHub Copilot as the provider.
+  // Format: provider/model-id — use the Copilot model ID exactly as listed.
+  "model": "copilot/gpt-4o-mini",
+
   "autoupdate": false,
 
   "watcher": {
