@@ -1,29 +1,19 @@
 #!/usr/bin/env bash
 # .devcontainer/post-start.sh
 #
-# Runs on every VS Code attach (postStartCommand). Idempotent.
-# 1. Registers the devkit VS Code extension with VS Code Server.
-# 2. Fixes Docker socket group ownership so docker commands work.
-# 3. Starts the devkit backend as a background service.
+# Runs on every container start (postStartCommand). Idempotent.
+# 1. Fixes Docker socket group ownership so docker commands work.
+# 2. Starts the devkit backend as a background service.
+#
+# NOTE: Extension registration is handled by postAttachCommand in devcontainer.json.
+# The `code` CLI is only available after VS Code Server attaches to the container;
+# it is not in PATH during postStartCommand (which runs before VS Code connects).
 #
 # Used only in the devcontainer / Codespace environment where the image
 # entrypoint is overridden to `sleep infinity` so VS Code Server can run.
 
 set -euo pipefail
 
-# ── VS Code extension registration ────────────────────────────────────────────
-# VS Code Server does not auto-register extensions pre-seeded in
-# ~/.vscode-server/extensions/ — they must be installed via `code --install-extension`.
-# Run on every start (idempotent: --force skips if already at same version).
-if [ -f /opt/devkit/devkit.vsix ]; then
-    code --install-extension /opt/devkit/devkit.vsix --force 2>&1 \
-        | grep -v '^$' || true
-    echo '[devkit] Extension registered'
-elif [ -d /opt/devkit/.devcontainer ]; then
-    # VSIX not present — extension was pre-seeded as a directory (older image);
-    # nothing more to do, VS Code picked it up from ~/.vscode-server/extensions.
-    true
-fi
 
 # ── Docker socket GID alignment ───────────────────────────────────────────────
 # The image bakes docker group GID=999 and adds the node user to it.
