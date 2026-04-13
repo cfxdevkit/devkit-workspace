@@ -17,10 +17,13 @@ set -euo pipefail
 # without "permission denied". node has passwordless sudo for this.
 if [ -S /var/run/docker.sock ]; then
     SOCKET_GID="$(stat -c %g /var/run/docker.sock 2>/dev/null || echo '')"
-    CURRENT_GID="$(getent group docker 2>/dev/null | cut -d: -f3 || echo '')"
-    if [ -n "$SOCKET_GID" ] && [ "$SOCKET_GID" != "0" ] && [ "$SOCKET_GID" != "$CURRENT_GID" ]; then
-        sudo groupmod -o -g "$SOCKET_GID" docker 2>/dev/null || true
-        echo "[devkit] Docker group GID realigned: ${CURRENT_GID} → ${SOCKET_GID}"
+    DOCKER_GID="$(getent group docker 2>/dev/null | cut -d: -f3 || echo '')"
+    if [ -n "$SOCKET_GID" ] && [ -n "$DOCKER_GID" ] && [ "$SOCKET_GID" != "$DOCKER_GID" ]; then
+        # Change the socket's group to match the container's docker group rather than
+        # the reverse (groupmod). groupmod only takes effect on new logins; chgrp takes
+        # effect immediately so the already-running VS Code Server session can use it.
+        sudo chgrp docker /var/run/docker.sock 2>/dev/null || true
+        echo "[devkit] Docker socket group set to docker (GID: ${DOCKER_GID})"
     fi
     echo "[devkit] Docker socket available (GID: ${SOCKET_GID:-?})"
 fi

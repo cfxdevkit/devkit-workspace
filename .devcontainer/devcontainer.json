@@ -36,10 +36,11 @@
     "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
   ],
 
-  // Install the custom devkit extension into VS Code remote (pre-installed in
-  // the devcontainer image by extracting the VSIX to ~/.vscode-server/extensions/).
-  // No postCreateCommand needed — VS Code Server picks it up automatically on connect.
-  // opencode is on the marketplace and is handled by customizations.vscode.extensions below.
+  // Install the custom devkit extension into VS Code remote on first create.
+  // VS Code Server does not auto-register extensions pre-seeded in ~/.vscode-server/extensions/;
+  // running `code --install-extension` here explicitly registers it in VS Code Server's manifest.
+  // The VSIX is baked into the image at /opt/devkit/devkit.vsix.
+  "postCreateCommand": "code --install-extension /opt/devkit/devkit.vsix --force",
 
   // Start the devkit backend on every attach (idempotent — skips if already healthy).
   "postStartCommand": "bash /opt/devkit/.devcontainer/post-start.sh",
