@@ -31,6 +31,8 @@ RUN chmod +x /opt/devkit/.devcontainer/entrypoint.sh
 # /home/node/.local/share/code-server/extensions/. Copy that directory directly
 # instead of extracting the VSIX — no `unzip` needed and no dependency on
 # /opt/devkit/devkit.vsix being present in the base image.
+#
+# Seed both remote extension roots used across Dev Containers / Codespaces.
 RUN set -e \
  && EXT_SRC=$(ls -d /home/node/.local/share/code-server/extensions/local.cfxdevkit-workspace-ext-* 2>/dev/null | head -1) \
  && if [ -z "$EXT_SRC" ]; then \
@@ -38,8 +40,9 @@ RUN set -e \
       exit 1; \
     fi \
  && EXT_NAME=$(basename "$EXT_SRC") \
- && mkdir -p /home/node/.vscode-server/extensions \
+ && mkdir -p /home/node/.vscode-server/extensions /home/node/.vscode-remote/extensions \
  && cp -r "$EXT_SRC" "/home/node/.vscode-server/extensions/${EXT_NAME}" \
- && chown -R node:node /home/node/.vscode-server \
+ && cp -r "$EXT_SRC" "/home/node/.vscode-remote/extensions/${EXT_NAME}" \
+ && chown -R node:node /home/node/.vscode-server /home/node/.vscode-remote \
  && echo "[devkit] Pre-installed extension: ${EXT_NAME}"
 

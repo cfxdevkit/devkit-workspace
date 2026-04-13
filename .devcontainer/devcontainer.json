@@ -41,6 +41,7 @@
   // Use a real entrypoint so the backend starts as part of container startup,
   // not as a best-effort lifecycle hook racing with VS Code attachment.
   "init": true,
+  "overrideCommand": false,
 
   // Forward all ports that devkit services listen on so they are reachable
   // from the browser / local machine via VS Code port forwarding.
