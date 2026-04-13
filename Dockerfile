@@ -305,15 +305,17 @@ COPY config/code-server.yaml config/code-server.yaml
 # ══════════════════════════════════════════════════════════════════════════════
 FROM opencode AS runtime
 
-# Install VS Code extensions from builder artifact
-COPY --from=builder /build/dist/devkit.vsix /tmp/devkit.vsix
+# Install VS Code extensions from builder artifact.
+# Keep the .vsix at /opt/devkit/devkit.vsix so that the devcontainer
+# postCreateCommand can install it into the native VS Code remote server
+# (used by GitHub Codespaces and local Dev Containers).
+COPY --from=builder /build/dist/devkit.vsix /opt/devkit/devkit.vsix
 RUN mkdir -p /home/node/.local/share/code-server/extensions \
               /home/node/.local/share/code-server/User \
  && code-server --extensions-dir /home/node/.local/share/code-server/extensions \
-                --install-extension /tmp/devkit.vsix \
+                --install-extension /opt/devkit/devkit.vsix \
  && code-server --extensions-dir /home/node/.local/share/code-server/extensions \
-                --install-extension sst-dev.opencode \
- && rm /tmp/devkit.vsix
+                --install-extension sst-dev.opencode
 
 COPY config/settings.json /home/node/.local/share/code-server/User/settings.json
 RUN chown -R node:node /home/node/.local

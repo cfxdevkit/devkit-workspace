@@ -1,37 +1,52 @@
 {
-  // CFX DevKit Workspace — GitHub Codespace configuration.
+  // CFX DevKit — devcontainer configuration.
   //
-  // Uses the pre-built devkit-workspace-web image so the full stack
-  // (code-server, devkit backend, MCP server, Conflux node) is available
-  // inside the Codespace without any local setup.
+  // Works in two environments:
+  //   • GitHub Codespaces — native VS Code browser interface, no local install needed
+  //   • Local VS Code     — Dev Containers extension (requires Docker Desktop or Podman)
   //
-  // Access the browser-based IDE at the forwarded port 8080.
-  // All other ports (devkit backend, Conflux RPC, etc.) are also forwarded
-  // so external tools can connect as they would on a local machine.
+  // Builds from .devcontainer/Dockerfile which extends the pre-built workspace image
+  // but resets the entrypoint so VS Code Server can take over instead of code-server.
   //
-  // Docker-in-Codespace (DooD) works automatically because GitHub Codespaces
-  // exposes a Docker daemon at /var/run/docker.sock and the image's entrypoint
-  // already handles socket permissions at startup.
+  // On first create:
+  //   - The devkit VS Code extension is installed into the native VS Code remote server.
+  // On every start:
+  //   - The devkit backend is started as a background service on port 7748.
+  //
+  // Docker socket access (DooD) is enabled so the devkit extension can manage the
+  // inner Conflux devkit stack (Hardhat node, block-streaming, etc.).
 
   "name": "CFX DevKit Workspace",
-  "image": "ghcr.io/cfxdevkit/devkit-workspace-web:latest",
 
-  // Let the image's own ENTRYPOINT run (starts devkit backend + code-server).
-  // Without this Codespace would override the entrypoint and code-server
-  // would never start.
-  "overrideCommand": false,
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
 
-  // Run VS Code remote extensions as the non-root workspace user.
+  // Run as the non-root node user that owns all devkit files in the image.
   "remoteUser": "node",
 
+  // Open the baked-in example project as the workspace (same as the standalone image).
+  // Local Dev Containers: the repo folder is still accessible via the filesystem.
+  // Codespaces: the cloned repo is at /workspaces/<repo>; devkit workspace at /opt/devkit/project-example.
+  "workspaceFolder": "/opt/devkit/project-example",
+
+  // Mount the Docker socket so the devkit extension can spin up/down the inner stack.
+  // Codespaces exposes /var/run/docker.sock automatically; local Docker does too.
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+
+  // Install the custom devkit extension into VS Code remote (runs once on container create).
+  // opencode is on the marketplace and is handled by customizations.vscode.extensions below.
+  "postCreateCommand": "code --install-extension /opt/devkit/devkit.vsix || true",
+
+  // Start the devkit backend on every attach (idempotent — skips if already healthy).
+  "postStartCommand": "bash /opt/devkit/.devcontainer/post-start.sh",
+
   // Forward all ports that devkit services listen on so they are reachable
-  // from the browser / local machine through Codespace port forwarding.
-  "forwardPorts": [8080, 3030, 7748, 8545, 8546, 8888, 12537, 12535],
+  // from the browser / local machine via VS Code port forwarding.
+  "forwardPorts": [3030, 7748, 8545, 8546, 8888, 12537, 12535],
   "portsAttributes": {
-    "8080": {
-      "label": "Code Server (browser IDE)",
-      "onAutoForward": "notify"
-    },
     "7748": {
       "label": "DevKit Backend API",
       "onAutoForward": "silent"
@@ -45,7 +60,7 @@
       "onAutoForward": "silent"
     },
     "8546": {
-      "label": "Conflux eSpace WebSocket",
+      "label": "Conflux eSpace WS",
       "onAutoForward": "silent"
     },
     "8888": {
@@ -57,8 +72,33 @@
       "onAutoForward": "silent"
     },
     "12535": {
-      "label": "Conflux Core Space WebSocket",
+      "label": "Conflux Core Space WS",
       "onAutoForward": "silent"
+    }
+  },
+
+  "customizations": {
+    "vscode": {
+      // Marketplace extensions installed automatically.
+      // The custom devkit extension is installed via postCreateCommand above.
+      "extensions": [
+        "sst-dev.opencode"
+      ],
+      // Mirror the settings from config/settings.json (baked into the image for code-server;
+      // applied here for the native VS Code remote server).
+      "settings": {
+        "workbench.colorTheme": "Default Dark Modern",
+        "workbench.preferredDarkColorTheme": "Default Dark Modern",
+        "window.autoDetectColorScheme": false,
+        "workbench.startupEditor": "none",
+        "extensions.autoUpdate": false,
+        "extensions.autoCheckUpdates": false,
+        "telemetry.telemetryLevel": "off",
+        "update.mode": "none",
+        "remote.autoForwardPorts": false,
+        "remote.autoForwardPortsSource": "output",
+        "devkit.devPort": 3001
+      }
     }
   }
 }
