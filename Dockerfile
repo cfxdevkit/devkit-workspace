@@ -111,34 +111,6 @@ RUN --mount=type=cache,id=pnpm-project-example-store,target=/pnpm/store,sharing=
  && pnpm install --frozen-lockfile 2>/dev/null || pnpm install --no-frozen-lockfile \
  && pnpm run build
 
-# Prepare runtime-only backend manifest for image install.
-# npm may still evaluate peer ranges from devDependencies during --omit=dev,
-# so we persist a sanitized package.json with only production fields.
-RUN mkdir -p /tmp/devkit-backend-runtime \
- && node -e " \
-               const fs = require('fs'); \
-               const pkg = JSON.parse(fs.readFileSync('/build/packages/devkit-backend/package.json', 'utf8')); \
-               const runtimePkg = { \
-                    name: pkg.name, \
-                    version: pkg.version, \
-                    description: pkg.description, \
-                    private: pkg.private, \
-                    main: pkg.main, \
-                    bin: pkg.bin, \
-                    license: pkg.license, \
-                    type: pkg.type, \
-                    dependencies: pkg.dependencies ?? {} \
-               }; \
-               if (runtimePkg.dependencies['@cfxdevkit/shared']?.startsWith('workspace:')) { \
-                    runtimePkg.dependencies['@cfxdevkit/shared'] = 'file:./shared'; \
-               } \
-               if (!runtimePkg.type) delete runtimePkg.type; \
-               fs.writeFileSync('/tmp/devkit-backend-runtime/package.json', JSON.stringify(runtimePkg, null, 2)); \
-          "
-RUN mkdir -p /tmp/devkit-backend-runtime/shared/dist \
- && cp -r /build/packages/shared/dist/. /tmp/devkit-backend-runtime/shared/dist/ \
- && cp /build/packages/shared/package.json /tmp/devkit-backend-runtime/shared/package.json
-
 # Prepare DEX UI server runtime deps outside the pnpm workspace.
 # server.mjs only needs viem + @cfxdevkit/dex-contracts at runtime.
 # pnpm workspace node_modules use symlinks that break when copied to runtime.
@@ -193,6 +165,30 @@ RUN --mount=type=cache,id=npm-mcp-pack-cache,target=/root/.npm,sharing=locked \
  && npm install --omit=dev --fetch-retries 5 --fetch-retry-mintimeout 10000 \
  && npm pack --pack-destination /tmp/ \
  && mv /tmp/cfxdevkit-mcp-*.tgz /tmp/cfxdevkit-mcp.tgz
+
+# Pack @cfxdevkit/devkit-backend into a self-contained tarball for global install.
+# Mirrors the MCP pack pattern: copy dist + @cfxdevkit/shared to a temp dir outside
+# the pnpm workspace, set bundledDependencies: true so all deps are embedded, then
+# npm pack → npm install -g. This produces the `devkit-backend` binary at
+# /usr/local/bin/devkit-backend — no absolute path or /opt directory needed.
+RUN mkdir -p /tmp/backend-pack \
+ && cp -r packages/devkit-backend/dist  /tmp/backend-pack/dist \
+ && cp    packages/devkit-backend/package.json /tmp/backend-pack/ \
+ && cp -r packages/shared               /tmp/backend-pack/shared \
+ && cd /tmp/backend-pack \
+ && node -e " \
+      const fs = require('fs'); \
+      const pkg = JSON.parse(fs.readFileSync('package.json')); \
+      pkg.dependencies['@cfxdevkit/shared'] = 'file:./shared'; \
+      delete pkg.private; \
+      pkg.bundledDependencies = true; \
+      fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2)); \
+     "
+RUN --mount=type=cache,id=npm-backend-pack-cache,target=/root/.npm,sharing=locked \
+     cd /tmp/backend-pack \
+ && npm install --omit=dev --fetch-retries 5 --fetch-retry-mintimeout 10000 \
+ && npm pack --pack-destination /tmp/ \
+ && mv /tmp/cfxdevkit-devkit-backend-*.tgz /tmp/cfxdevkit-devkit-backend.tgz
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Stage 2 — base
@@ -257,19 +253,16 @@ RUN chown -R node:node /home/node/.config
 
 # ══════════════════════════════════════════════════════════════════════════════
 # Stage 3 — devkit
-# Adds vendored devkit backend runtime and @cfxdevkit/mcp global install.
-# After this stage the `devkit-mcp` binary is available at /usr/local/bin/.
+# Adds vendored devkit backend and @cfxdevkit/mcp as global system binaries.
+# After this stage `devkit-backend` and `devkit-mcp` are available in PATH.
 # ══════════════════════════════════════════════════════════════════════════════
 FROM base AS devkit
 
-# Vendored backend package runtime (no global conflux-devkit dependency).
-# The extension launcher resolves /opt/devkit/devkit-backend/dist/cli.js first.
-COPY --from=builder /tmp/devkit-backend-runtime/package.json /opt/devkit/devkit-backend/package.json
-COPY --from=builder /tmp/devkit-backend-runtime/shared/ /opt/devkit/devkit-backend/shared/
-COPY --from=builder /build/packages/devkit-backend/dist/ /opt/devkit/devkit-backend/dist/
-RUN --mount=type=cache,id=npm-devkit-backend-cache,target=/root/.npm,sharing=locked \
-     cd /opt/devkit/devkit-backend \
- && npm install --omit=dev --no-package-lock --fetch-retries 5 --fetch-retry-mintimeout 10000
+# @cfxdevkit/devkit-backend: installs the devkit-backend global binary.
+# Self-contained tarball with bundledDependencies — no network access needed.
+COPY --from=builder /tmp/cfxdevkit-devkit-backend.tgz /tmp/cfxdevkit-devkit-backend.tgz
+RUN npm install -g --offline /tmp/cfxdevkit-devkit-backend.tgz \
+ && rm /tmp/cfxdevkit-devkit-backend.tgz
 
 # @cfxdevkit/mcp: installs the devkit-mcp global binary
 # Install from the packed tarball produced by the builder stage

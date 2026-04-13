@@ -22,7 +22,6 @@ drop_to_node() {
 start_devkit_backend() {
     local port="$BACKEND_PORT"
     local host="${CFXDEVKIT_HOST:-0.0.0.0}"
-    local backend_cli="${CFXDEVKIT_LOCAL_BACKEND_CLI:-/opt/devkit/devkit-backend/dist/cli.js}"
     local log_dir="/home/node/.conflux-devkit"
     local log_file="$log_dir/backend.log"
 
@@ -34,16 +33,14 @@ start_devkit_backend() {
     mkdir -p "$log_dir"
     chown -R node:node "$log_dir" 2>/dev/null || true
 
-    if [ -f "$backend_cli" ]; then
-        echo "[devkit] Starting vendored backend: node $backend_cli --no-open --host $host --port $port"
-        sudo -E -H -u node bash -lc \
-            "nohup node '$backend_cli' --no-open --host '$host' --port '$port' >> '$log_file' 2>&1 < /dev/null &"
-    else
-        echo "[devkit] WARNING: vendored backend CLI not found at $backend_cli"
-        echo "[devkit] Falling back to global conflux-devkit binary"
-        sudo -E -H -u node bash -lc \
-            "nohup conflux-devkit --no-open --host '$host' --port '$port' >> '$log_file' 2>&1 < /dev/null &"
+    if ! command -v devkit-backend >/dev/null 2>&1; then
+        echo "[devkit] ERROR: devkit-backend binary not found in PATH"
+        return 1
     fi
+
+    echo "[devkit] Starting devkit-backend --no-open --host $host --port $port"
+    sudo -E -H -u node bash -lc \
+        "nohup devkit-backend --no-open --host '$host' --port '$port' >> '$log_file' 2>&1 < /dev/null &"
 
     for _ in $(seq 1 40); do
         if curl -fsS --max-time 2 "http://127.0.0.1:${port}/health" >/dev/null 2>&1; then

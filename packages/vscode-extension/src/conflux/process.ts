@@ -6,7 +6,6 @@
  * devcontainer image) and falls back to `npx conflux-devkit` if not found.
  */
 
-import { execSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import * as vscode from 'vscode';
@@ -37,18 +36,20 @@ function getConfig(): { port: number } {
 }
 
 /**
- * Resolve the conflux-devkit command to use.
+ * Resolve the vendored backend CLI to use.
  * Preference order:
  *   1) explicit env override (CFXDEVKIT_LOCAL_BACKEND_CLI)
- *   2) vendored workspace backend package
- *   3) vendored in-container backend package (/opt/devkit/devkit-backend)
- *   4) global conflux-devkit binary
- *   5) npx conflux-devkit
+ *   2) vendored workspace backend package (dev workflow)
+ *   3) devkit-backend system binary (installed globally in the container image)
+ *
+ * No fallback to `conflux-devkit` or npx: that binary opens a browser UI, not
+ * a headless server. The container image always provides either the dev package
+ * or the global `devkit-backend` binary at /usr/local/bin/devkit-backend.
  */
-function resolveCommand(): { cmd: string; args: string[]; source: 'local-package' | 'global' | 'npx' } {
+function resolveCommand(): { cmd: string; args: string[] } {
   const envCli = process.env.CFXDEVKIT_LOCAL_BACKEND_CLI;
   if (envCli && existsSync(envCli)) {
-    return { cmd: 'node', args: [envCli], source: 'local-package' };
+    return { cmd: 'node', args: [envCli] };
   }
 
   const workspaceRoot = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
@@ -61,23 +62,19 @@ function resolveCommand(): { cmd: string; args: string[]; source: 'local-package
       'cli.js'
     );
     if (existsSync(localCli)) {
-      return { cmd: 'node', args: [localCli], source: 'local-package' };
+      return { cmd: 'node', args: [localCli] };
     }
   }
 
-  const containerCli = '/opt/devkit/devkit-backend/dist/cli.js';
-  if (existsSync(containerCli)) {
-    return { cmd: 'node', args: [containerCli], source: 'local-package' };
+  // Global binary installed in the container image via npm install -g
+  if (existsSync('/usr/local/bin/devkit-backend')) {
+    return { cmd: 'devkit-backend', args: [] };
   }
 
-  try {
-    // Use `which` / PATH lookup only — do NOT invoke `conflux-devkit --version`
-    // because the CLI starts the server instead of printing a version and exiting.
-    execSync('which conflux-devkit', { stdio: 'ignore' });
-    return { cmd: 'conflux-devkit', args: [], source: 'global' };
-  } catch {
-    return { cmd: 'npx', args: ['conflux-devkit'], source: 'npx' };
-  }
+  throw new Error(
+    'devkit-backend not found. Expected the devkit-backend binary at ' +
+    '/usr/local/bin/devkit-backend or CFXDEVKIT_LOCAL_BACKEND_CLI set.'
+  );
 }
 
 /** Returns true if the server process is currently alive. */
@@ -104,14 +101,16 @@ export async function startDevkitProcess(): Promise<void> {
   channel.show(true);
   channel.appendLine(`[conflux-devkit] Starting server on port ${port}…`);
 
-  const { cmd, args, source } = resolveCommand();
-  if (source === 'local-package') {
-    channel.appendLine('[conflux-devkit] Using vendored workspace backend package');
-  } else if (source === 'global') {
-    channel.appendLine('[conflux-devkit] Using global binary (pre-installed in image)');
-  } else {
-    channel.appendLine('[conflux-devkit] Global binary not found — falling back to npx (may be slow)');
+  let resolved: { cmd: string; args: string[] };
+  try {
+    resolved = resolveCommand();
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    channel.appendLine(`[conflux-devkit] ERROR: ${msg}`);
+    throw err;
   }
+  const { cmd, args } = resolved;
+  channel.appendLine('[conflux-devkit] Using vendored backend package');
 
   const command = [cmd, ...args, '--no-open', '--host', '0.0.0.0', '--port', String(port)].join(' ');
   await startManagedProcess({

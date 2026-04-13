@@ -4,7 +4,7 @@
   "private": true,
   "description": "Vendored conflux-devkit backend for local refinement and upstream backporting",
   "bin": {
-    "conflux-devkit-local": "./dist/cli.js"
+    "devkit-backend": "./dist/cli.js"
   },
   "main": "./dist/cli.js",
   "files": [

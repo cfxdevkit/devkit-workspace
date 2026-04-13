@@ -11,7 +11,6 @@
 set -euo pipefail
 
 BACKEND_PORT="${CFXDEVKIT_PORT:-7748}"
-BACKEND_CLI="/opt/devkit/devkit-backend/dist/cli.js"
 LOG_DIR="${HOME}/.conflux-devkit"
 LOG_FILE="${LOG_DIR}/backend.log"
 
@@ -22,12 +21,12 @@ fi
 
 mkdir -p "$LOG_DIR"
 
-if [ ! -f "$BACKEND_CLI" ]; then
-    echo "[devkit] WARNING: backend CLI not found at $BACKEND_CLI — skipping"
-    exit 0
+if ! command -v devkit-backend >/dev/null 2>&1; then
+    echo "[devkit] ERROR: devkit-backend binary not found in PATH"
+    exit 1
 fi
 
-nohup node "$BACKEND_CLI" --no-open --host 0.0.0.0 --port "$BACKEND_PORT" \
+nohup devkit-backend --no-open --host 0.0.0.0 --port "$BACKEND_PORT" \
     >> "$LOG_FILE" 2>&1 < /dev/null &
 
 echo "[devkit] Backend starting on :${BACKEND_PORT} (log: $LOG_FILE)"
