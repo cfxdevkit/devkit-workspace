@@ -11,9 +11,12 @@ import { spawnSync, execFileSync } from 'node:child_process';
 
 const FORCED_RUNTIME = process.env.CFXDEVKIT_RUNTIME?.trim().toLowerCase() ?? '';
 
+// `which` is not available on Windows; use `where.exe` instead.
+const LOOKUP_CMD = process.platform === 'win32' ? 'where' : 'which';
+
 function commandExists(cmd) {
   try {
-    execFileSync('which', [cmd], { stdio: 'ignore' });
+    execFileSync(LOOKUP_CMD, [cmd], { stdio: 'ignore' });
     return true;
   } catch {
     return false;

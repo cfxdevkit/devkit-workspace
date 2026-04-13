@@ -72,12 +72,16 @@ export function startWorkspace(
   stopAndRemoveManagedContainers(runtime);
   ensureTargetVolume(runtime, target);
 
+  // Host networking gives services direct access to host ports (Conflux node, devkit API, etc.).
+  // Docker Desktop on Windows and Mac do not support --network=host; use bridge mode with
+  // explicit publish flags instead. Port 8080 → code-server, others → devkit services.
+  const useHostNetwork = process.platform === 'linux';
+
   const args: string[] = [
     'run',
     '-d',
     '--name',
     target.containerName,
-    '--network=host',
     '-l',
     'com.cfxdevkit.workspace.managed=true',
     '-l',
@@ -92,18 +96,33 @@ export function startWorkspace(
     'DOCKER_HOST=unix:///var/run/docker.sock',
   ];
 
+  if (useHostNetwork) {
+    args.push('--network=host');
+  } else {
+    // Bridge mode: publish all ports that code-server and devkit services listen on.
+    for (const port of ['8080', '3030', '7748', '8545', '8546', '8888', '12537', '12535']) {
+      args.push('-p', `${port}:${port}`);
+    }
+  }
+
   if (target.mounted && target.resolvedPath) {
     args.push('-v', `${target.resolvedPath}:/workspace`);
     args.push('-e', 'WORKSPACE=/workspace');
   }
 
   if (socket) {
-    args.push(
-      '-v',
-      runtime === 'podman'
-        ? `${socket}:/var/run/docker.sock:z`
-        : `${socket}:/var/run/docker.sock`,
-    );
+    if (process.platform === 'win32') {
+      // Windows named pipes: Docker Desktop translates these into /var/run/docker.sock
+      // inside the Linux container automatically.
+      args.push('-v', `${socket}:/var/run/docker.sock`);
+    } else {
+      args.push(
+        '-v',
+        runtime === 'podman'
+          ? `${socket}:/var/run/docker.sock:z`
+          : `${socket}:/var/run/docker.sock`,
+      );
+    }
     const gid = socketGroupId(socket);
     if (gid) args.push('--group-add', gid);
   } else {
@@ -115,7 +134,12 @@ export function startWorkspace(
   }
 
   if (runtime === 'podman') {
-    args.push('--userns=keep-id', '--cap-add=NET_RAW');
+    // --userns=keep-id is Linux-only (rootless Podman); Podman Desktop on Windows/Mac
+    // runs containers inside a VM where UID mapping is handled differently.
+    if (process.platform === 'linux') {
+      args.push('--userns=keep-id');
+    }
+    args.push('--cap-add=NET_RAW');
   }
 
   args.push(image);

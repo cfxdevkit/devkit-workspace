@@ -24,7 +24,10 @@ import {
 // ── Socket helpers ─────────────────────────────────────────────────────────
 
 export function socketGroupId(socket: string | null): string | null {
-  if (!socket || !existsSync(socket)) return null;
+  if (!socket) return null;
+  // Windows named pipes have no GID concept; skip GID-based group-add on Windows.
+  if (process.platform === 'win32') return null;
+  if (!existsSync(socket)) return null;
   try {
     return String(statSync(socket).gid);
   } catch {
