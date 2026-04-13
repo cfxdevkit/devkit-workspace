@@ -10,6 +10,21 @@
 
 set -euo pipefail
 
+# ── Docker socket GID alignment ───────────────────────────────────────────────
+# The image bakes docker group GID=999 and adds the node user to it.
+# In GitHub Codespaces and some local Docker setups the mounted socket may have
+# a different GID. Realign the docker group to match so docker commands work
+# without "permission denied". node has passwordless sudo for this.
+if [ -S /var/run/docker.sock ]; then
+    SOCKET_GID="$(stat -c %g /var/run/docker.sock 2>/dev/null || echo '')"
+    CURRENT_GID="$(getent group docker 2>/dev/null | cut -d: -f3 || echo '')"
+    if [ -n "$SOCKET_GID" ] && [ "$SOCKET_GID" != "0" ] && [ "$SOCKET_GID" != "$CURRENT_GID" ]; then
+        sudo groupmod -o -g "$SOCKET_GID" docker 2>/dev/null || true
+        echo "[devkit] Docker group GID realigned: ${CURRENT_GID} → ${SOCKET_GID}"
+    fi
+    echo "[devkit] Docker socket available (GID: ${SOCKET_GID:-?})"
+fi
+
 BACKEND_PORT="${CFXDEVKIT_PORT:-7748}"
 LOG_DIR="${HOME}/.conflux-devkit"
 LOG_FILE="${LOG_DIR}/backend.log"
