@@ -25,3 +25,26 @@ CMD ["sleep", "infinity"]
 # regardless of whether the repository folder is mounted.
 COPY --chown=node:node post-start.sh /opt/devkit/.devcontainer/post-start.sh
 RUN chmod +x /opt/devkit/.devcontainer/post-start.sh
+
+# Pre-install the devkit VS Code extension for native VS Code remote / Codespace.
+#
+# `code --install-extension` is unavailable in non-interactive lifecycle scripts
+# because the VS Code Server CLI wrapper is only injected into the user's shell
+# profile, which /bin/sh does not load.
+#
+# Solution: a VSIX is a ZIP file — extract it directly into the VS Code Server
+# extensions directory. VS Code Server picks up any directory under
+# ~/.vscode-server/extensions/<publisher>.<name>-<version>/ on connect.
+# `jq` is already present in the base image.
+RUN apt-get update && apt-get install -y --no-install-recommends unzip \
+ && rm -rf /var/lib/apt/lists/* \
+ && mkdir -p /home/node/.vscode-server/extensions \
+ && cp /opt/devkit/devkit.vsix /tmp/devkit.vsix \
+ && cd /tmp && unzip -q devkit.vsix -d devkit-vsix \
+ && PUBLISHER=$(jq -r '.publisher' devkit-vsix/extension/package.json) \
+ && NAME=$(jq -r '.name' devkit-vsix/extension/package.json) \
+ && VERSION=$(jq -r '.version' devkit-vsix/extension/package.json) \
+ && mv devkit-vsix/extension "/home/node/.vscode-server/extensions/${PUBLISHER}.${NAME}-${VERSION}" \
+ && chown -R node:node /home/node/.vscode-server \
+ && rm -rf /tmp/devkit-vsix /tmp/devkit.vsix
+
