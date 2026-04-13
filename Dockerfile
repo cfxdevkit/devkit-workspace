@@ -181,6 +181,7 @@ RUN mkdir -p /tmp/backend-pack \
       const pkg = JSON.parse(fs.readFileSync('package.json')); \
       pkg.dependencies['@cfxdevkit/shared'] = 'file:./shared'; \
       delete pkg.private; \
+      delete pkg.devDependencies; \
       pkg.bundledDependencies = true; \
       fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2)); \
      "
