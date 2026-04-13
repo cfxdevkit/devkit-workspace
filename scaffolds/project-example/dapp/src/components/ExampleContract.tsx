@@ -7,6 +7,7 @@ import { getContractAddress } from '../generated/contracts-addresses';
 import { getChainLabel } from '../chains';
 import { useAuth } from '@cfxdevkit/ui-shared';
 import { getCoreChainConfigForEspaceChain, normalizeCoreAddressForChain, useCoreWallet } from '../hooks/useCoreWallet';
+import { StatusBanner, useAuth } from '@cfxdevkit/ui-shared';
 import { useDevkitNetworkSync } from '../hooks/useDevkitNetwork';
 
 interface ContractEntry {
@@ -423,9 +424,6 @@ export function ExampleContract() {
               >
                 {isAuthLoading ? 'Authorizing...' : 'Initialize Session'}
               </button>
-              {authError && (
-                <p className="text-error text-[8px] font-black uppercase italic tracking-widest mt-1 opacity-60">{authError}</p>
-              )}
             </div>
           ) : (
             <div className="grid gap-4 lg:grid-cols-3">
@@ -532,24 +530,10 @@ export function ExampleContract() {
             </div>
           )}
 
-          {status && (
-            <div className="px-4 py-2 rounded-xl bg-accent/5 border border-accent/10 animate-fade-in flex items-center gap-2">
-              <div className="h-1 w-1 rounded-full bg-accent animate-pulse shadow-[0_0_5px_currentColor]" />
-              <p className="text-accent/80 text-[9px] font-black uppercase tracking-[0.1em] italic">{status}</p>
-            </div>
-          )}
-          {writeError && (
-            <div className="px-4 py-2 rounded-xl bg-error/5 border border-error/10 animate-fade-in">
-              <p className="text-error/60 text-[8px] font-black uppercase italic tracking-tight">Error: {writeError.slice(0, 100)}</p>
-            </div>
-          )}
-          {lastCoreExecution ? (
-            <div className="px-4 py-2 rounded-xl bg-success/5 border border-success/10 animate-fade-in">
-              <p className="text-success/70 text-[8px] font-black uppercase italic tracking-tight">
-                {lastCoreExecution.action} finalized through Core tx {formatShortHash(lastCoreExecution.hash)} with outcome {lastCoreExecution.outcomeStatus}.
-              </p>
-            </div>
-          ) : null}
+          {/* Status Feedback */}
+          {status ? <StatusBanner message={status} tone={status.startsWith('✓') ? 'success' : 'accent'} /> : null}
+          {writeError ? <StatusBanner message={`Error: ${writeError.slice(0, 100)}`} tone="error" /> : null}
+          {authError ? <StatusBanner message={authError} tone="error" /> : null}
 
           <div className="border-t border-white/5 pt-6 flex flex-col items-center gap-2 select-none opacity-20">
             <span className="text-[8px] font-black uppercase tracking-[0.3em] text-text-secondary">Wagmi Integrated Sandbox</span>

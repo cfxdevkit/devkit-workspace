@@ -1,5 +1,4 @@
 import { useAccount, useBalance, useConnect, useDisconnect } from 'wagmi';
-import { injected } from 'wagmi/connectors';
 import { useState } from 'react';
 import { useAuth } from '../hooks/useAuth';
 
@@ -9,7 +8,7 @@ import { useAuth } from '../hooks/useAuth';
  */
 export function ConnectButton() {
   const { address, isConnected } = useAccount();
-  const { connect, isPending: isConnecting } = useConnect();
+  const { connect, connectors, isPending: isConnecting } = useConnect();
   const { disconnect } = useDisconnect();
   const { isAuthenticated, isLoading: isSigning, error, signIn, signOut } = useAuth();
   const { data: balance } = useBalance({
@@ -18,6 +17,7 @@ export function ConnectButton() {
   });
   const [copied, setCopied] = useState(false);
   const shortAddress = address ? `${address.slice(0, 6)}…${address.slice(-4)}` : '';
+  const eSpaceConnector = connectors.find((connector) => connector.id === 'metaMask') ?? null;
 
   const copyAddress = () => {
     if (!address) return;
@@ -32,15 +32,15 @@ export function ConnectButton() {
     return (
       <button
         type="button"
-        onClick={() => connect({ connector: injected() })}
-        disabled={isConnecting}
+        onClick={() => eSpaceConnector && connect({ connector: eSpaceConnector })}
+        disabled={isConnecting || !eSpaceConnector}
         className="btn btn-secondary !px-4 !py-2 text-sm group"
       >
         <div className="relative overflow-hidden w-4 h-4 mr-1">
           <span className="absolute inset-0 flex items-center justify-center text-accent transition-transform duration-300 group-hover:-translate-y-5">⬡</span>
           <span className="absolute inset-0 flex items-center justify-center text-accent translate-y-5 transition-transform duration-300 group-hover:translate-y-0">⬢</span>
         </div>
-        <span>{isConnecting ? 'Connecting…' : 'Connect Wallet'}</span>
+        <span>{isConnecting ? 'Connecting…' : eSpaceConnector ? 'Connect Wallet' : 'MetaMask Unavailable'}</span>
       </button>
     );
   }

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
+import { StatusBanner } from '@cfxdevkit/ui-shared';
 import { appUrl } from '../app-base';
 
 const AMOUNTS = [10, 50, 100, 500];
@@ -98,13 +99,7 @@ export function Faucet() {
           );
         })}
       </div>
-
-      {status && (
-        <div className={`rounded-lg border px-3 py-1.5 flex items-center gap-2 animate-fade-in ${status.includes('✓') ? 'border-success/10 bg-success/5 text-success' : status.includes('Error') ? 'border-error/10 bg-error/5 text-error' : 'border-accent/10 bg-accent/5 text-accent'}`}>
-          <div className={`h-1 w-1 rounded-full ${status.includes('✓') ? 'bg-success shadow-[0_0_8px_currentColor]' : status.includes('Error') ? 'bg-error' : 'bg-accent animate-pulse shadow-[0_0_8px_currentColor]'}`} />
-          <p className="text-[8px] font-black uppercase tracking-[0.1em] italic leading-none">{status}</p>
-        </div>
-      )}
+      {status ? <StatusBanner message={status} tone={status.startsWith('✓') ? 'success' : status.startsWith('Error') ? 'error' : 'accent'} /> : null}
     </div>
   );
 }

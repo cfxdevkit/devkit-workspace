@@ -1,7 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import type { ReactNode } from 'react';
 import { createConfig, http, WagmiProvider } from 'wagmi';
-import { AuthProvider } from '@cfxdevkit/ui-shared';
+import { AppToaster, AuthProvider } from '@cfxdevkit/ui-shared';
 import { confluxLocalESpace } from './chains';
 
 const config = createConfig({
@@ -24,6 +24,7 @@ export function Providers({ children }: { children: ReactNode }) {
         <AuthProvider>
           {children}
         </AuthProvider>
+        <AppToaster />
       </QueryClientProvider>
     </WagmiProvider>
   );

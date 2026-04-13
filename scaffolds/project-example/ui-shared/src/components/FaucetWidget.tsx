@@ -1,6 +1,7 @@
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
 import { Button } from './Button';
+import { StatusBanner } from './StatusBanner';
 
 const AMOUNTS = [10, 50, 100, 500];
 
@@ -108,16 +109,7 @@ export function FaucetWidget({ children }: FaucetWidgetProps) {
               );
             })}
           </div>
-
-          {status && (
-            <div className={`mt-4 p-3 rounded-lg border text-xs font-medium animate-fade-in ${
-              status.startsWith('✓') ? 'bg-success/10 border-success/20 text-success' : 
-              status.startsWith('Error') ? 'bg-error/10 border-error/20 text-error' : 
-              'bg-accent/10 border-accent/20 text-accent'
-            }`}>
-              {status}
-            </div>
-          )}
+          {status ? <StatusBanner message={status} tone={status.startsWith('✓') ? 'success' : status.startsWith('Error') ? 'error' : 'accent'} /> : null}
         </div>
       )}
 

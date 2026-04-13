@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAccount } from 'wagmi';
+import { StatusBanner } from './StatusBanner';
 
 const AMOUNTS = [10, 50, 100, 500];
 
@@ -91,12 +92,7 @@ export function Faucet() {
           );
         })}
       </div>
-
-      {status && (
-        <p className={`text-sm mt-3 animate-fade-in ${status.startsWith('✓') ? 'text-success' : status.startsWith('Error') ? 'text-error' : 'text-text-secondary'}`}>
-          {status}
-        </p>
-      )}
+      {status ? <StatusBanner message={status} tone={status.startsWith('✓') ? 'success' : status.startsWith('Error') ? 'error' : 'accent'} /> : null}
     </div>
   );
 }
