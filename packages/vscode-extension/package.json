@@ -2,7 +2,7 @@
   "name": "cfxdevkit-workspace-ext",
   "displayName": "CFX DevKit Workspace",
   "description": "Conflux blockchain development environment — node lifecycle, contract deployment, Docker Compose, and devcontainer tooling",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "local",
   "engines": {
     "vscode": "^1.85.0"
