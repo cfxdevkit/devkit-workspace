@@ -363,9 +363,10 @@ Run:
 
 ```bash
 npx conflux-workspace doctor
+npx conflux-workspace logs .
 ```
 
-Then confirm the runtime socket is visible to the CLI.
+Then confirm the runtime socket is visible to the CLI and inspect the recent backend and container output directly.
 
 ---
 

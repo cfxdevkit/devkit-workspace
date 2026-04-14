@@ -14,6 +14,7 @@ import { cleanRegistry } from './commands/clean.js';
 import { createWorkspace } from './commands/create.js';
 import { showDoctor } from './commands/doctor.js';
 import { showProfileList } from './commands/list.js';
+import { showLogs } from './commands/logs.js';
 import { purgeWorkspace } from './commands/purge.js';
 import { rebuildWorkspace } from './commands/rebuild.js';
 import { removeWorkspace } from './commands/rm.js';
@@ -74,6 +75,8 @@ function dispatch(command: string, runtime: Runtime, opts: ReturnType<typeof par
       return showStatus(runtime, opts);
     case 'list':
       return showProfileList(runtime, opts);
+    case 'logs':
+      return showLogs(runtime, opts);
     case 'rebuild':
       return rebuildWorkspace(runtime, opts, DEFAULT_IMAGE);
     case 'alias':

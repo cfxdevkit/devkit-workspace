@@ -10,13 +10,13 @@ export const DISPLAY_LABEL_KEY = 'com.cfxdevkit.workspace.display';
 export const MODE_LABEL_KEY = 'com.cfxdevkit.workspace.mode';
 export const WORKSPACE_CONFIG_DIR = 'conflux-workspace';
 export const STATE_FILE_NAME = 'state.json';
-export const COMMANDS = new Set(['start', 'stop', 'rm', 'purge', 'status', 'list', 'rebuild', 'alias', 'doctor', 'create', 'clean']);
+export const COMMANDS = new Set(['start', 'stop', 'rm', 'purge', 'status', 'list', 'logs', 'rebuild', 'alias', 'doctor', 'create', 'clean']);
 export const ALIAS_ACTIONS = new Set(['set', 'add', 'rm', 'remove', 'delete', 'list', 'ls']);
 
 // ── Primitive type aliases ─────────────────────────────────────────────────
 
 export type Runtime = 'docker' | 'podman';
-export type Command = 'start' | 'stop' | 'rm' | 'purge' | 'status' | 'list' | 'rebuild' | 'alias' | 'doctor' | 'create' | 'clean';
+export type Command = 'start' | 'stop' | 'rm' | 'purge' | 'status' | 'list' | 'logs' | 'rebuild' | 'alias' | 'doctor' | 'create' | 'clean';
 export type AliasAction = 'set' | 'rm' | 'list';
 
 // ── CLI option bag ─────────────────────────────────────────────────────────

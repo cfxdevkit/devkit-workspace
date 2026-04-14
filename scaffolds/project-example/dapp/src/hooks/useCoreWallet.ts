@@ -67,6 +67,10 @@ function getChainId(value: unknown): string | null {
   return normalized;
 }
 
+async function requestNoParams(provider: ConfluxProvider, method: string): Promise<unknown> {
+  return provider.request({ method, params: [] });
+}
+
 function formatError(error: unknown): string {
   if (typeof error === 'object' && error !== null) {
     const maybeError = error as { code?: number; message?: string };
@@ -278,8 +282,8 @@ export function useCoreWallet() {
 
     try {
       const [accounts, nextChainId] = await Promise.all([
-        provider.request({ method: 'cfx_accounts' }).catch(() => []),
-        provider.request({ method: 'cfx_chainId' }).catch(() => null),
+        requestNoParams(provider, 'cfx_accounts').catch(() => []),
+        requestNoParams(provider, 'cfx_chainId').catch(() => null),
       ]);
 
       setAddress(getFirstAccount(accounts));
@@ -301,10 +305,10 @@ export function useCoreWallet() {
     setError(null);
 
     try {
-      const accounts = await provider.request({ method: 'cfx_requestAccounts' });
+      const accounts = await requestNoParams(provider, 'cfx_requestAccounts');
       setAddress(getFirstAccount(accounts));
 
-      const nextChainId = await provider.request({ method: 'cfx_chainId' }).catch(() => null);
+      const nextChainId = await requestNoParams(provider, 'cfx_chainId').catch(() => null);
       setChainId(getChainId(nextChainId));
     } catch (nextError) {
       setError(formatError(nextError));
@@ -338,7 +342,7 @@ export function useCoreWallet() {
     }
 
     try {
-      const nextChainId = await provider.request({ method: 'cfx_chainId' }).catch(() => null);
+      const nextChainId = await requestNoParams(provider, 'cfx_chainId').catch(() => null);
       setChainId(getChainId(nextChainId));
     } catch (nextError) {
       setError(formatError(nextError));

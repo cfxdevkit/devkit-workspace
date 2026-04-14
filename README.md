@@ -406,6 +406,7 @@ direct `conflux-workspace` install, or the root `pnpm run workspace:*` wrapper.
 | `purge` | Removes the selected profile container and its home volume | No |
 | `status` | Shows detailed runtime information for one profile or all known profiles | N/A |
 | `list` | Shows concise inventory of known profiles, aliases, and volume/container presence | N/A |
+| `logs` | Shows recent container logs for the selected workspace profile | N/A |
 | `alias` | Creates, removes, or lists alias names that point to workspace targets | N/A |
 | `doctor` | Checks runtime availability, socket discovery, local state, and CLI installation visibility | N/A |
 | `create` | Copies the built-in `project-example` template into a new destination folder | N/A |

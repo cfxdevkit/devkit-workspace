@@ -160,6 +160,7 @@ Commands:
   purge <project-path>   Remove the target workspace profile container and home volume
   status [project-path]  Show detailed status (all managed profiles by default)
   list                   List known workspace profiles and aliases
+  logs <project-path>    Show recent container logs for the target workspace profile
   rebuild <project-path> Reset workspace: purge profile and start fresh
   alias [action]         Manage optional aliases for workspace targets
   doctor                 Check runtime, socket, state, and local CLI environment
@@ -190,6 +191,7 @@ Examples:
   conflux-workspace start --alias demo
   conflux-workspace status
   conflux-workspace list
+  conflux-workspace logs /path/to/project
   conflux-workspace clean
   conflux-workspace doctor
   conflux-workspace alias set demo /path/to/project
