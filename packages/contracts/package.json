@@ -1,6 +1,6 @@
 {
   "name": "@cfxdevkit/dex-contracts",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Compiled Uniswap V2 contracts and mock tokens for CFX DevKit DEX",
   "private": true,
   "type": "module",
