@@ -1,0 +1,25 @@
+{
+  "name": "{{PACKAGE_NAME}}",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "deps:install": "pnpm install",
+    "doctor": "node ./scripts/doctor.mjs",
+    "doctor:json": "node ./scripts/doctor.mjs --json",
+    "sync:network": "node ./scripts/sync-project-network.mjs",
+    "sync:network:json": "node ./scripts/sync-project-network.mjs --json",
+    "contracts:compile": "pnpm --dir contracts compile",
+    "contracts:artifact": "node ./scripts/write-contract-artifact.mjs",
+    "contracts:artifact:json": "node ./scripts/write-contract-artifact.mjs --json",
+    "codegen": "pnpm run contracts:compile && pnpm run contracts:artifact",
+    "contracts:list": "node ./scripts/list-contracts.mjs",
+    "contracts:list:json": "node ./scripts/list-contracts.mjs --json",
+    "smoke:workspace": "pnpm run sync:network:json && pnpm run codegen && pnpm run contracts:list:json && pnpm run doctor:json && pnpm run build",
+    "dev": "pnpm run sync:network && pnpm run codegen && pnpm --dir dapp dev",
+    "build": "pnpm run sync:network && pnpm run codegen && pnpm --dir dapp build",
+    "serve": "pnpm --dir dapp serve",
+    "stack:up": "docker compose up -d --build",
+    "stack:down": "docker compose down"
+  }
+}

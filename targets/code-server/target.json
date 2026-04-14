@@ -1,0 +1,12 @@
+{
+  "name": "code-server",
+  "description": "Browser IDE target with code-server and proxy-aware base URL support",
+  "runtime": "browser-ide",
+  "recommended": false,
+  "features": {
+    "baseUrl": true,
+    "proxy": true,
+    "codeServer": true
+  },
+  "filesDir": "files"
+}

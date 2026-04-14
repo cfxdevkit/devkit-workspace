@@ -1,0 +1,11 @@
+{
+  "name": "minimal-dapp",
+  "description": "Minimal starter scaffold with only base integration surfaces",
+  "defaultTarget": "devcontainer",
+  "supportedTargets": ["devcontainer", "code-server"],
+  "tags": ["minimal", "starter", "static"],
+  "templateDir": "template",
+  "materialize": {
+    "uiShared": true
+  }
+}

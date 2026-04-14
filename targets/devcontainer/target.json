@@ -1,0 +1,12 @@
+{
+  "name": "devcontainer",
+  "description": "Shared devcontainer target for local VS Code and Codespaces",
+  "runtime": "editor",
+  "recommended": true,
+  "features": {
+    "baseUrl": false,
+    "proxy": false,
+    "codeServer": false
+  },
+  "filesDir": "files"
+}

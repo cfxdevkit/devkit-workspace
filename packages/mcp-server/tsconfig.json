@@ -1,8 +1,0 @@
-{
-  "extends": "../../tsconfig.profile.node-esm.json",
-  "compilerOptions": {
-    "outDir": "./dist",
-    "rootDir": "./src"
-  },
-  "include": ["src/**/*"]
-}

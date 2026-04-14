@@ -1,0 +1,13 @@
+{
+  "name": "@new-devkit/scaffold-cli",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "description": "Scaffold-only CLI for new-devkit templates and targets",
+  "bin": {
+    "new-devkit": "./src/cli.js"
+  },
+  "dependencies": {
+    "@new-devkit/template-core": "workspace:*"
+  }
+}

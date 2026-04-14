@@ -1,0 +1,12 @@
+{
+  "name": "contracts",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "exports": {
+    ".": "./generated/example-counter.js"
+  },
+  "scripts": {
+    "compile": "node ./scripts/compile.mjs"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "pull": "never",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "DEVKIT_DEVCONTAINER_IMAGE": "new-devkit-devcontainer:dev"
+    }
+  },
+  "updateRemoteUserUID": false,
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "terminal.integrated.defaultProfile.linux": "sh"
+      }
+    }
+  },
+  "postCreateCommand": "pnpm install && pnpm doctor:json",
+  "remoteUser": "node",
+  "mounts": [
+    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
+  ],
+  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+  "init": true,
+  "overrideCommand": false
+}

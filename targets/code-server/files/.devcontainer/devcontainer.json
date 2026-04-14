@@ -1,0 +1,15 @@
+{
+  "name": "{{PROJECT_NAME}}",
+  "pull": "never",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "args": {
+      "DEVKIT_CODE_SERVER_IMAGE": "new-devkit-code-server:dev"
+    }
+  },
+  "updateRemoteUserUID": false,
+  "remoteUser": "node",
+  "workspaceFolder": "/workspace",
+  "init": true,
+  "overrideCommand": false
+}

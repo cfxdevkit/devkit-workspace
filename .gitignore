@@ -1,27 +1,2 @@
-# Dependencies
-**/node_modules/
-
-# Build outputs
-packages/*/dist/
-packages/*/out/
-packages/contracts/hh-artifacts/
-packages/contracts/hh-cache/
-packages/contracts/typechain-types/
-dex-ui/dist/
-dex-ui/dapp/dist/
 .generated/
-project-example/
-!scaffolds/project-example/
-!scaffolds/project-example/**
-
-# Cache dirs
-packages/mcp-server/.feeds/
-
-# OS / editor
-.DS_Store
-Thumbs.db
-.vscode/
-.review/
-
-# Packaged extension artifacts at dist root (generated during CI)
-dist/*.vsix
+node_modules/

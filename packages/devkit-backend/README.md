@@ -1,9 +1,8 @@
-# @cfxdevkit/devkit-backend
+# @new-devkit/devkit-backend
 
-Vendored backend-only copy of `conflux-devkit` used for fast iteration inside this workspace.
+Minimal backend runtime baked into shared new-devkit images.
 
 Purpose:
-- Refine backend behavior locally without waiting on upstream release cadence.
-- Keep changes easy to backport into upstream `devtools/devkit`.
-
-This package intentionally includes only the backend runtime (`src/cli.ts`, `src/server/**`) and no UI assets.
+- expose a deterministic health surface for editor targets
+- provide a reusable `devkit-backend` binary across generated workspaces
+- keep backend infrastructure out of scaffold templates
