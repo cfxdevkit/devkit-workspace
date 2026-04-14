@@ -2,8 +2,10 @@
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
+import { stdin as input, stdout as output } from 'node:process';
+import { createInterface } from 'node:readline/promises';
+import { fileURLToPath } from 'node:url';
 
 const repoRoot = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const releaseFiles = [
@@ -80,18 +82,17 @@ if (dryRun) {
   runStep('Preview npm package contents', ['npm', 'pack', '--dry-run'], {
     cwd: resolve(repoRoot, 'packages/workspace-cli'),
   });
-  for (const [relativePath, content] of originalReleaseFileContents) {
-    writeFileSync(resolve(repoRoot, relativePath), content);
-  }
+  restoreReleaseFiles();
   console.log(`Dry run completed for ${nextVersion}. Version files were restored and nothing was committed, published, or pushed.`);
   process.exit(0);
 }
 
-runStep('Verify local npm auth', ['npm', 'whoami'], {
+await ensureNpmAuth({
   cwd: resolve(repoRoot, 'packages/workspace-cli'),
 });
 runStep('Publish conflux-workspace to npm', ['npm', 'publish', '--access', 'public'], {
   cwd: resolve(repoRoot, 'packages/workspace-cli'),
+  restoreOnFailure: true,
 });
 
 runStep('Create release commit', ['git', 'add', ...releaseFiles]);
@@ -102,6 +103,73 @@ runStep('Push release tag', ['git', 'push', remote, targetTag]);
 
 console.log(`Release ${nextVersion} published to npm and pushed to ${remote}.`);
 console.log(`GitHub Actions will now publish ghcr.io/cfxdevkit/devkit-workspace-web:${nextVersion}.`);
+
+async function ensureNpmAuth(options = {}) {
+  if (hasNpmAuth(options)) {
+    console.log('npm authentication confirmed.');
+    return;
+  }
+
+  console.log('npm authentication is required before publishing conflux-workspace.');
+  console.log('This is a user action and can be completed with npm login.');
+
+  if (process.env.CI || !process.stdin.isTTY || !process.stdout.isTTY) {
+    restoreReleaseFiles();
+    console.error('Interactive npm authentication is not available in this terminal. Run npm login or configure NPM_TOKEN, then rerun the release command.');
+    process.exit(1);
+  }
+
+  const shouldLogin = await promptYesNo('Run npm login now? [Y/n] ');
+  if (!shouldLogin) {
+    restoreReleaseFiles();
+    console.error('Release cancelled before publish. Authenticate with npm and rerun the release command when ready.');
+    process.exit(1);
+  }
+
+  runStep('Authenticate with npm', ['npm', 'login'], {
+    cwd: options.cwd ?? repoRoot,
+    restoreOnFailure: true,
+  });
+
+  if (!hasNpmAuth(options)) {
+    restoreReleaseFiles();
+    console.error('npm authentication is still unavailable after npm login. Run npm whoami to confirm your session, then retry the release.');
+    process.exit(1);
+  }
+
+  console.log('npm authentication confirmed.');
+}
+
+function hasNpmAuth(options = {}) {
+  const result = spawnSync('npm', ['whoami'], {
+    cwd: options.cwd ?? repoRoot,
+    env: process.env,
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+
+  if (result.error) {
+    return false;
+  }
+
+  return (result.status ?? 1) === 0;
+}
+
+async function promptYesNo(question) {
+  const rl = createInterface({ input, output });
+  try {
+    const answer = (await rl.question(question)).trim().toLowerCase();
+    return !answer || answer === 'y' || answer === 'yes';
+  } finally {
+    rl.close();
+  }
+}
+
+function restoreReleaseFiles() {
+  for (const [relativePath, content] of originalReleaseFileContents) {
+    writeFileSync(resolve(repoRoot, relativePath), content);
+  }
+}
 
 function readFlagValue(argv, name) {
   const index = argv.indexOf(name);
@@ -128,12 +196,18 @@ function runStep(label, command, options = {}) {
   });
 
   if (result.error) {
+    if (options.restoreOnFailure) {
+      restoreReleaseFiles();
+    }
     console.error(result.error.message);
     process.exit(1);
   }
 
   const status = result.status ?? 0;
   if (status !== 0) {
+    if (options.restoreOnFailure) {
+      restoreReleaseFiles();
+    }
     process.exit(status);
   }
 }
