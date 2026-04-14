@@ -460,6 +460,13 @@ conflux-workspace create ./my-project
 pnpm run workspace:create -- ./my-project
 ```
 
+To create a brand new GitHub repository from the same scaffold, including the
+Codespaces-ready `.devcontainer/` setup, use:
+
+```bash
+pnpm run project-example:create-repo -- my-project --owner your-org
+```
+
 Rules:
 
 - A destination folder is required.
@@ -467,6 +474,35 @@ Rules:
 - The command fails if the destination exists and is not empty.
 - The command copies the template contents into the destination root.
 - `create` does not use `--alias` or `--profile` because it is creating a new folder, not targeting an existing profile.
+
+### Bootstrap a GitHub repository from the example
+
+The repo also includes a one-shot bootstrap helper for new hosted projects:
+
+```bash
+pnpm run project-example:create-repo -- my-project --owner your-org --private
+```
+
+What it does:
+
+- assembles `scaffolds/project-example` into a new destination folder
+- initializes a local git repository on `main`
+- creates the first commit
+- runs `gh repo create --source <dir> --push`
+
+Useful options:
+
+- `--public` or `--private`
+- `--dir ./path/to/output`
+- `--description "..."`
+- `--homepage https://...`
+- `--skip-gh` to only create the local repository without creating the remote yet
+
+Prerequisites:
+
+- `gh auth login` already completed
+- `git config --global user.name ...`
+- `git config --global user.email ...`
 
 ### Target selectors
 

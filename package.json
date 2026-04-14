@@ -37,6 +37,7 @@
     "deps:install": "pnpm run workspace:install",
     "project-example:generate": "node ./scripts/assemble-project-example.mjs ./.generated/project-example",
     "project-example:install": "pnpm run project-example:generate && pnpm --dir .generated/project-example install",
+    "project-example:create-repo": "node ./scripts/create-project-example-repo.mjs",
     "deploy": "pnpm run project-example:install && pnpm --dir .generated/project-example run deploy",
     "deploy:public": "pnpm run project-example:install && pnpm --dir .generated/project-example run deploy:public",
     "deploy:testnet": "pnpm run project-example:install && pnpm --dir .generated/project-example run deploy:testnet",

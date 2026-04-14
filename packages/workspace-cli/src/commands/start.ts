@@ -2,6 +2,8 @@
  * commands/start.ts — start a workspace container.
  */
 
+import { release } from 'node:os';
+
 import {
   ensureTargetVolume,
   imageExists,
@@ -19,6 +21,15 @@ import type { Options, Runtime } from '../types.js';
 export const DEFAULT_IMAGE_PREFIX = 'ghcr.io/cfxdevkit/devkit-workspace-web:';
 export const DEFAULT_IMAGE_LATEST = `${DEFAULT_IMAGE_PREFIX}latest`;
 export const LOCAL_IMAGE = 'cfxdevkit/devkit-workspace-web:latest';
+
+function isWslEnvironment(): boolean {
+  if (process.platform !== 'linux') return false;
+  return Boolean(
+    process.env.WSL_DISTRO_NAME
+      || process.env.WSL_INTEROP
+      || release().toLowerCase().includes('microsoft'),
+  );
+}
 
 export function startWorkspace(
   runtime: Runtime,
@@ -72,10 +83,10 @@ export function startWorkspace(
   stopAndRemoveManagedContainers(runtime);
   ensureTargetVolume(runtime, target);
 
-  // Host networking gives services direct access to host ports (Conflux node, devkit API, etc.).
-  // Docker Desktop on Windows and Mac do not support --network=host; use bridge mode with
-  // explicit publish flags instead. Port 8080 → code-server, others → devkit services.
-  const useHostNetwork = process.platform === 'linux';
+  // Host networking is suitable for native Linux only.
+  // WSL2, Windows, and macOS should use bridge mode with explicit published ports
+  // so the host browser can reach the workspace on localhost.
+  const useHostNetwork = process.platform === 'linux' && !isWslEnvironment();
 
   const args: string[] = [
     'run',

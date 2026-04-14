@@ -37,6 +37,18 @@ pnpm codegen
 pnpm dev
 ```
 
+## Codespaces / Dev Containers
+
+This scaffold includes a `.devcontainer/` configuration that extends the
+published CFX DevKit image and starts the backend automatically before VS Code
+attaches.
+
+When the repository is created in GitHub and opened in Codespaces:
+
+- the DevKit backend is started during container startup
+- the DevKit VS Code extension is pre-seeded for the remote server
+- `pnpm install` runs automatically on first create via `postCreateCommand`
+
 ## Commands
 
 | Command | Description |

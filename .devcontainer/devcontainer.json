@@ -79,11 +79,6 @@
 
   "customizations": {
     "vscode": {
-      // Marketplace extensions installed automatically.
-      // The custom devkit extension is pre-seeded in the image.
-      "extensions": [
-        "sst-dev.opencode"
-      ],
       // Mirror the settings from config/settings.json (baked into the image for code-server;
       // applied here for the native VS Code remote server).
       "settings": {
