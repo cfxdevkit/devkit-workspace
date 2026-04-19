@@ -1,0 +1,63 @@
+{
+	// DevKit project — workspace settings.
+	// These defaults align with the VS Code extension's script contract.
+
+	// ── Editor ────────────────────────────────────────────────────────────────
+	"editor.formatOnSave": true,
+	"editor.tabSize": 2,
+	"editor.defaultFormatter": "biomejs.biome",
+	"[javascript]": { "editor.defaultFormatter": "biomejs.biome" },
+	"[typescript]": { "editor.defaultFormatter": "biomejs.biome" },
+	"[typescriptreact]": { "editor.defaultFormatter": "biomejs.biome" },
+	"[json]": { "editor.defaultFormatter": "biomejs.biome" },
+	"[solidity]": { "editor.tabSize": 4 },
+
+	// ── File visibility ───────────────────────────────────────────────────────
+	"files.exclude": {
+		"**/node_modules": true,
+		"**/dist": true,
+		"**/dist-server": true
+	},
+	"files.watcherExclude": {
+		"**/node_modules/**": true,
+		"**/.git/objects/**": true,
+		"**/dist/**": true
+	},
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/dist": true,
+		"**/contracts/generated": true,
+		"**/dapp/src/generated": true
+	},
+
+	// ── Git ───────────────────────────────────────────────────────────────────
+	"git.autofetch": true,
+	"git.confirmSync": false,
+
+	// ── DevKit extension settings ─────────────────────────────────────────────
+	// Script contract: names must match package.json scripts exactly.
+	"devkit.scriptDoctor": "doctor",
+	"devkit.scriptInstall": "deps:install",
+	"devkit.scriptContractsDeploy": "deploy",
+	"devkit.scriptClean": "clean",
+	"devkit.scriptDevStart": "dev",
+	"devkit.scriptDevStop": "",
+	"devkit.scriptProdStart": "stack:up",
+	"devkit.scriptProdStop": "stack:down",
+	"devkit.scriptProdRebuild": "stack:rebuild",
+	"devkit.scriptProdStatus": "stack:status",
+	"devkit.scriptProdLogs": "stack:logs",
+	"devkit.devPort": 3001,
+	"devkit.prodPort": 3030,
+	"devkit.packageManager": "pnpm",
+	"devkit.contractsArtifactPath": "dapp/src/generated/contracts-addresses.ts",
+
+	// ── Conflux DevKit ────────────────────────────────────────────────────────
+	"cfxdevkit.autoStart": true,
+	"cfxdevkit.port": 7748,
+	"cfxdevkit.espaceRpc": "http://127.0.0.1:8545",
+	"cfxdevkit.coreRpc": "http://127.0.0.1:12537",
+	// Explicit DEX UI server path — matches the global npm install location in the
+	// devkit devcontainer image so the extension finds it even on first start.
+	"cfxdevkit.dexServerScript": "/usr/local/lib/node_modules/@devkit/devkit-dex-ui/server.mjs"
+}

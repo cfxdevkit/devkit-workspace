@@ -1,0 +1,61 @@
+name: Codespaces Prebuild
+
+# Prebuilds the devcontainer so Codespaces start in seconds instead of
+# waiting for `pnpm install` on every open. The prebuild snapshot includes
+# node_modules and the built VS Code extension VSIX.
+#
+# GitHub will also automatically trigger a new prebuild when:
+#   - .devcontainer/** changes
+#   - devcontainer.json changes
+# if you enable "Prebuild configuration" in the repo Settings → Codespaces UI.
+#
+# This workflow handles the CI-triggered rebuild on every push to main/dev.
+
+on:
+  # Trigger after the Docker Images workflow completes so we prebuild
+  # against the freshly published devcontainer image.
+  workflow_run:
+    workflows: ["Docker Images"]
+    types:
+      - completed
+    branches:
+      - dev
+  workflow_dispatch:
+
+jobs:
+  prebuild:
+    name: Prebuild Codespace
+    runs-on: ubuntu-latest
+    # Only run when the docker-images workflow succeeded (not on failure/cancellation)
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    permissions:
+      contents: read
+      packages: write
+      # NOTE: For the push to ghcr.io to succeed, the repo must have
+      # "Allow GitHub Actions to create and approve packages" enabled:
+      # Settings → Actions → General → Workflow permissions → check the box.
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prebuild devcontainer
+        uses: devcontainers/ci@v0.3
+        with:
+          # Push the prebuild image to GHCR so Codespaces can use it.
+          # The image tag matches what GitHub Codespaces expects.
+          imageName: ghcr.io/${{ github.repository_owner }}/devkit-workspace-prebuild
+          imageTag: latest
+          push: always
+          # Run the same postCreateCommand so pnpm install + extension build
+          # are baked into the snapshot — Codespace opens instantly.
+          runCmd: |
+            pnpm install
+            pnpm --filter @devkit/vscode-extension build 2>/dev/null || true

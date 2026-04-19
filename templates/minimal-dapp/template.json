@@ -1,11 +1,14 @@
 {
-  "name": "minimal-dapp",
-  "description": "Minimal starter scaffold with only base integration surfaces",
-  "defaultTarget": "devcontainer",
-  "supportedTargets": ["devcontainer", "code-server"],
-  "tags": ["minimal", "starter", "static"],
-  "templateDir": "template",
-  "materialize": {
-    "uiShared": true
-  }
+	"name": "minimal-dapp",
+	"description": "Minimal starter scaffold with only base integration surfaces",
+	"defaultTarget": "devcontainer",
+	"supportedTargets": ["devcontainer", "code-server"],
+	"tags": ["minimal", "starter", "static"],
+	"templateDir": "template",
+	"generated": {
+		"targetModulePath": "dapp/src/generated/devkit-target.js"
+	},
+	"materialize": {
+		"uiShared": true
+	}
 }

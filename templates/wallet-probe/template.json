@@ -1,0 +1,8 @@
+{
+	"name": "wallet-probe",
+	"description": "Diagnostic single-page app to test every wallet connection method (MetaMask + Fluent, Core + eSpace)",
+	"defaultTarget": "devcontainer",
+	"supportedTargets": ["devcontainer", "code-server"],
+	"tags": ["diagnostic", "wallet", "probe"],
+	"templateDir": "template"
+}

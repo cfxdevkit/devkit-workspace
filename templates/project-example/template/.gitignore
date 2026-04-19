@@ -2,5 +2,17 @@ node_modules/
 dapp/node_modules/
 contracts/node_modules/
 dapp/dist/
+# Keep generated source seeds tracked so copying the template directly still
+# produces a buildable repo on a fresh clone or in Vercel.
+dapp/src/generated/*.js
+!dapp/src/generated/*.ts
+contracts/generated/*.js
 deploy/
-.new-devkit/
+# Keep deployments/contracts.json tracked — it is the address source of truth.
+# After deploying to testnet/mainnet, commit the updated file so CI and Vercel
+# builds can resolve contract addresses without env var overrides.
+deployments/*
+!deployments/contracts.json
+.devkit/
+.devcontainer/.docker.sock
+.pnpm-store/

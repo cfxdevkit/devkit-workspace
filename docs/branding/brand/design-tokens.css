@@ -1,0 +1,41 @@
+/* Conflux DevKit — Design Tokens (Opus) */
+
+:root {
+  /* Background */
+  --cdk-bg-900: #091018;
+  --cdk-bg-800: #0f1724;
+  --cdk-panel: #132033;
+  --cdk-panel-2: #17273d;
+
+  /* Borders */
+  --cdk-border: #1e344e;
+  --cdk-border-accent: #28405d;
+
+  /* Primary — Cyan */
+  --cdk-cyan-500: #19d3ff;
+  --cdk-cyan-300: #89f0ff;
+
+  /* Accent — Orange */
+  --cdk-orange-500: #ff7a1a;
+  --cdk-orange-300: #ffb36b;
+
+  /* Text */
+  --cdk-text-strong: #f5fbff;
+  --cdk-text-soft: #a7bed3;
+  --cdk-text-muted: #506882;
+
+  /* Semantic */
+  --cdk-success: #27d799;
+  --cdk-shadow: rgba(0, 0, 0, 0.35);
+
+  /* Typography */
+  --cdk-font-display: "JetBrains Mono", "IBM Plex Mono", ui-monospace, monospace;
+  --cdk-font-body: Inter, "Space Grotesk", "Segoe UI", sans-serif;
+
+  /* Radii */
+  --cdk-radius-xl: 36px;
+  --cdk-radius-lg: 24px;
+  --cdk-radius-md: 18px;
+  --cdk-radius-sm: 14px;
+  --cdk-radius-pill: 12px;
+}

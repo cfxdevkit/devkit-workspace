@@ -1,2 +1,47 @@
+# Dependencies
+**/node_modules/
+
+# Build outputs
+apps/*/dist/
+apps/*/out/
+packages/*/dist/
+packages/*/out/
+packages/*/*.tgz
+packages/scaffold-cli/assets/
+packages/devkit-base/artifacts/generated/
+packages/devkit-base/artifacts/.tmp/
 .generated/
-node_modules/
+dist/*.vsix
+
+# Runtime artifacts
+.devkit/
+.devcontainer/.docker.sock
+/dapp/
+/generated/
+
+# Cache
+packages/mcp-server/.feeds/
+packages/contracts/typechain-types/
+.pnpm-store/
+.pnpm-store
+
+# OS / editor
+.DS_Store
+Thumbs.db
+
+# Editor / IDE
+.vscode/
+.idea/
+*.sublime-workspace
+
+# Environment
+.env
+.env.*
+
+# Logs
+*.log
+.pnpm-debug.log
+
+# Secrets / keys
+*.pem
+*.key

@@ -1,14 +1,15 @@
 {
-  "name": "project-example",
-  "description": "Reference example scaffold",
-  "defaultTarget": "devcontainer",
-  "supportedTargets": ["devcontainer", "code-server"],
-  "tags": ["reference", "example", "monorepo"],
-  "templateDir": "template",
-  "generated": {
-    "targetModulePath": "dapp/src/generated/devkit-target.js"
-  },
-  "materialize": {
-    "uiShared": true
-  }
+	"name": "project-example",
+	"description": "Reference example scaffold",
+	"defaultTarget": "devcontainer",
+	"supportedTargets": ["devcontainer", "code-server"],
+	"tags": ["reference", "example", "monorepo"],
+	"templateDir": "template",
+	"generated": {
+		"targetModulePath": "dapp/src/generated/devkit-target.js"
+	},
+	"materialize": {
+		"uiShared": true,
+		"confluxWallet": true
+	}
 }

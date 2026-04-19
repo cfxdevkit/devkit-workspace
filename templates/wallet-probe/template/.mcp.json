@@ -1,0 +1,16 @@
+{
+	"mcpServers": {
+		"devkit": {
+			"type": "stdio",
+			"command": "devkit-mcp",
+			"args": [],
+			"env": {
+				"CFXDEVKIT_AGENT_WORKSPACE": "${CFXDEVKIT_AGENT_WORKSPACE}",
+				"CFXDEVKIT_PROJECT_ROOT": "${CFXDEVKIT_PROJECT_ROOT}",
+				"CFXDEVKIT_BACKEND_URL": "${CFXDEVKIT_BACKEND_URL}",
+				"CFXDEVKIT_COMPOSE_FILE": "${CFXDEVKIT_COMPOSE_FILE}",
+				"CFXDEVKIT_RUNTIME_MODE": "${CFXDEVKIT_RUNTIME_MODE}"
+			}
+		}
+	}
+}

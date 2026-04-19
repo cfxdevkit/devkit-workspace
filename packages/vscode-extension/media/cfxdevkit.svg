@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="currentColor">
+  <!-- Hex ring: outer R=110, inner R=90, filled via evenodd -->
+  <path fill-rule="evenodd" d="M128 18L223 73L223 183L128 238L33 183L33 73Z M128 38L206 83L206 173L128 218L50 173L50 83Z"/>
+  <!-- Chevron ">": stroke-to-fill polygon (half-width 12, arms from (76,102)→(113,128)→(76,154)) -->
+  <polygon points="83,92 120,118 120,138 83,164 69,144 106,118 106,138 69,112"/>
+  <!-- Cursor "_": filled rounded rect -->
+  <rect x="120" y="148" width="61" height="13" rx="6" ry="6"/>
+</svg>

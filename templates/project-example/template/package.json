@@ -1,25 +1,44 @@
 {
-  "name": "{{PACKAGE_NAME}}",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "deps:install": "pnpm install",
-    "doctor": "node ./scripts/doctor.mjs",
-    "doctor:json": "node ./scripts/doctor.mjs --json",
-    "sync:network": "node ./scripts/sync-project-network.mjs",
-    "sync:network:json": "node ./scripts/sync-project-network.mjs --json",
-    "contracts:compile": "pnpm --dir contracts compile",
-    "contracts:artifact": "node ./scripts/write-contract-artifact.mjs",
-    "contracts:artifact:json": "node ./scripts/write-contract-artifact.mjs --json",
-    "codegen": "pnpm run contracts:compile && pnpm run contracts:artifact",
-    "contracts:list": "node ./scripts/list-contracts.mjs",
-    "contracts:list:json": "node ./scripts/list-contracts.mjs --json",
-    "smoke:workspace": "pnpm run sync:network:json && pnpm run codegen && pnpm run contracts:list:json && pnpm run doctor:json && pnpm run build",
-    "dev": "pnpm run sync:network && pnpm run codegen && pnpm --dir dapp dev",
-    "build": "pnpm run sync:network && pnpm run codegen && pnpm --dir dapp build",
-    "serve": "pnpm --dir dapp serve",
-    "stack:up": "docker compose up -d --build",
-    "stack:down": "docker compose down"
-  }
+	"name": "project-example",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"deps:install": "pnpm install",
+		"doctor": "node ./scripts/doctor.mjs",
+		"doctor:json": "node ./scripts/doctor.mjs --json",
+		"clean": "rm -rf node_modules contracts/node_modules dapp/node_modules contracts/generated dapp/src/generated dapp/dist dapp/dist-server deploy",
+		"sync:network": "node ./scripts/sync-project-network.mjs",
+		"sync:network:json": "node ./scripts/sync-project-network.mjs --json",
+		"contracts:compile": "pnpm --dir contracts compile",
+		"contracts:artifact": "node ./scripts/write-contract-artifact.mjs",
+		"contracts:artifact:json": "node ./scripts/write-contract-artifact.mjs --json",
+		"codegen": "pnpm run contracts:compile && pnpm run contracts:artifact",
+		"deploy": "node ./scripts/deploy-contract.mjs",
+		"deploy:public": "node ./scripts/deploy-contract.mjs",
+		"deploy:testnet": "DEVKIT_NETWORK=testnet DEPLOY_CHAIN_ID=71 DEPLOY_RPC_URL=https://evmtestnet.confluxrpc.com node ./scripts/deploy-contract.mjs",
+		"deploy:mainnet": "DEVKIT_NETWORK=mainnet DEPLOY_CHAIN_ID=1030 DEPLOY_RPC_URL=https://evm.confluxrpc.com node ./scripts/deploy-contract.mjs",
+		"contracts:list": "node ./scripts/list-contracts.mjs",
+		"contracts:list:json": "node ./scripts/list-contracts.mjs --json",
+		"smoke:workspace": "pnpm run sync:network:json && pnpm run codegen && pnpm run contracts:list:json && pnpm run doctor:json && pnpm run build",
+		"lint": "pnpm exec biome lint .",
+		"lint:fix": "pnpm exec biome lint --write .",
+		"format": "pnpm exec biome format --write .",
+		"dev": "pnpm run sync:network && pnpm run codegen && pnpm --dir dapp dev",
+		"build": "pnpm run sync:network && pnpm run codegen && pnpm --dir dapp build",
+		"build:vercel": "node ./scripts/vercel-build.mjs",
+		"serve": "pnpm --dir dapp serve",
+		"stack:up": "node ./scripts/compose.mjs up -d --build",
+		"stack:rebuild": "node ./scripts/compose.mjs up -d --build --force-recreate",
+		"stack:down": "node ./scripts/compose.mjs down",
+		"stack:status": "node ./scripts/compose.mjs ps",
+		"stack:logs": "node ./scripts/compose.mjs logs -f dapp"
+	},
+	"engines": {
+		"node": ">=22",
+		"pnpm": ">=9"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "^2.4.10"
+	}
 }

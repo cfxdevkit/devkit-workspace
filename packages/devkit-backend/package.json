@@ -1,16 +1,45 @@
 {
-  "name": "@new-devkit/devkit-backend",
-  "version": "0.0.0",
-  "private": true,
-  "description": "Shared backend runtime baked into new-devkit infrastructure images",
-  "bin": {
-    "devkit-backend": "./src/cli.js"
-  },
-  "files": [
-    "src/**/*",
-    "README.md"
-  ],
-  "scripts": {
-    "check": "node ./src/cli.js --help"
-  }
+	"name": "@devkit/devkit-backend",
+	"version": "0.0.0",
+	"private": true,
+	"description": "Shared backend runtime baked into devkit infrastructure images",
+	"bin": {
+		"devkit-backend": "./dist/cli.js"
+	},
+	"main": "./dist/cli.js",
+	"files": [
+		"dist/**/*",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"type-check": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@xcfx/node": "0.8.0",
+		"cive": "^0.8.1",
+		"compression": "^1.7.5",
+		"cors": "^2.8.5",
+		"express": "^4.21.2",
+		"open": "^10.1.2",
+		"socket.io": "^4.8.1",
+		"viem": "^2.43.3"
+	},
+	"devDependencies": {
+		"@devkit/shared": "workspace:*",
+		"@cfxdevkit/compiler": "^1.2.5",
+		"@cfxdevkit/contracts": "^1.2.5",
+		"@cfxdevkit/core": "^1.2.5",
+		"@cfxdevkit/devnode": "^1.2.5",
+		"@cfxdevkit/protocol": "^1.2.5",
+		"@cfxdevkit/services": "^1.2.5",
+		"@types/compression": "^1.7.5",
+		"@types/cors": "^2.8.17",
+		"@types/express": "^5.0.1",
+		"@types/node": "^20.0.0",
+		"tsup": "^8.5.1",
+		"typescript": "^5.7.3"
+	},
+	"license": "Apache-2.0"
 }

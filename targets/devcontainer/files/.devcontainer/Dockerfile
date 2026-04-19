@@ -1,2 +1,2 @@
-ARG DEVKIT_DEVCONTAINER_IMAGE=new-devkit-devcontainer:dev
+ARG DEVKIT_DEVCONTAINER_IMAGE=ghcr.io/cfxdevkit/devkit-devcontainer:dev
 FROM ${DEVKIT_DEVCONTAINER_IMAGE}

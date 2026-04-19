@@ -1,0 +1,36 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Transparent canvas for overlay compositing -->
+  <rect width="1920" height="1080" fill="transparent"/>
+
+  <g transform="translate(72 840)">
+    <!-- Main panel -->
+    <rect x="0" y="0" width="860" height="180" rx="24" fill="#091018" fill-opacity="0.94"/>
+    <rect x="0" y="0" width="860" height="180" rx="24" stroke="#1E344E" stroke-width="3"/>
+
+    <!-- Cyan accent bar -->
+    <rect x="0" y="0" width="10" height="180" rx="5" fill="#19D3FF"/>
+
+    <!-- Orange dot -->
+    <circle cx="810" cy="38" r="8" fill="#FF7A1A"/>
+
+    <!-- Hackathon label -->
+    <text x="36" y="50" fill="#19D3FF"
+          font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+          font-size="18" font-weight="700" letter-spacing="3">GLOBAL HACKFEST 2026</text>
+
+    <!-- Speaker name -->
+    <text x="36" y="100" fill="#F5FBFF"
+          font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+          font-size="38" font-weight="700">SP  /  cfxdevkit</text>
+
+    <!-- Line 1 -->
+    <text x="36" y="140" fill="#A7BED3"
+          font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+          font-size="20" font-weight="500">Building Conflux DevKit — local Conflux stack</text>
+
+    <!-- Line 2 -->
+    <text x="36" y="168" fill="#A7BED3"
+          font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+          font-size="20" font-weight="500">with AI-native tooling and resumable state</text>
+  </g>
+</svg>

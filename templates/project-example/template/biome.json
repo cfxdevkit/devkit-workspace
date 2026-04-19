@@ -1,0 +1,32 @@
+{
+	"root": false,
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"includes": [
+			"**/*.cjs",
+			"**/*.cts",
+			"**/*.js",
+			"**/*.json",
+			"**/*.jsonc",
+			"**/*.jsx",
+			"**/*.mjs",
+			"**/*.mts",
+			"**/*.ts",
+			"**/*.tsx",
+			"!**/node_modules",
+			"!**/dist",
+			"!**/dist-server",
+			"!contracts/generated",
+			"!dapp/src/generated",
+			"!deploy"
+		]
+	},
+	"linter": {
+		"enabled": true
+	}
+}

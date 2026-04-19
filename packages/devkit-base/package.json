@@ -1,12 +1,14 @@
 {
-  "name": "@new-devkit/devkit-base",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "description": "Shared runtime artifact metadata and common configuration for new-devkit targets",
-  "main": "src/index.js",
-  "files": ["src"],
-  "scripts": {
-    "check": "node ./src/index.js"
-  }
+	"name": "@devkit/devkit-base",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"description": "Shared runtime artifact metadata and common configuration for devkit targets",
+	"main": "src/index.js",
+	"files": [
+		"src"
+	],
+	"scripts": {
+		"check": "node ./src/index.js"
+	}
 }

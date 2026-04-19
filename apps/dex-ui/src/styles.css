@@ -1,0 +1,80 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-bg-primary text-text-primary antialiased h-full;
+  }
+  html {
+    @apply h-full;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-bg-secondary/40 border border-border/50 rounded-2xl shadow-xl shadow-black/40 p-6 backdrop-blur-md transition-all duration-300 hover:border-border-hover/80 hover:bg-bg-secondary/60;
+  }
+  .btn {
+    @apply font-bold rounded-xl px-5 py-2.5 transition-all duration-300 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 flex items-center justify-center gap-2 select-none;
+  }
+  .btn-primary {
+    @apply bg-accent text-white hover:bg-accent-hover shadow-lg shadow-accent/20 border border-accent/20 hover:border-accent/40;
+  }
+  .btn-secondary {
+    @apply bg-bg-tertiary/40 text-text-primary border border-border/60 hover:border-border-hover hover:bg-bg-tertiary/80 backdrop-blur-sm;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/40 border border-transparent hover:border-border/40 transition-all;
+  }
+  .btn-outline {
+    @apply border border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/60;
+  }
+  .btn-danger {
+    @apply bg-error/5 text-error border border-error/20 hover:bg-error/10 hover:border-error/40;
+  }
+  
+  .input-field {
+    @apply bg-bg-tertiary/30 border border-border/60 rounded-xl px-4 py-2.5 font-mono text-sm text-text-primary placeholder:text-text-secondary/30 outline-none w-full transition-all focus:border-border-focus focus:ring-1 focus:ring-border-focus/40 backdrop-blur-sm;
+  }
+  
+  .select-custom-wrapper {
+    @apply relative flex items-center gap-2 rounded-xl border border-border/60 bg-bg-tertiary/40 px-3 py-1.5 transition-all hover:border-border-hover focus-within:border-accent/50 backdrop-blur-sm;
+  }
+  
+  .select-custom {
+    @apply appearance-none bg-transparent pr-6 text-sm font-bold text-text-primary outline-none cursor-pointer;
+  }
+
+  .glass-panel {
+    @apply bg-bg-secondary/40 border border-border/50 backdrop-blur-xl shadow-2xl;
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-text-primary via-text-primary to-accent;
+  }
+}
+
+/* Custom Webkit Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  @apply bg-border-hover/50 rounded-full hover:bg-border-hover;
+}
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.4s ease-out forwards;
+}
+

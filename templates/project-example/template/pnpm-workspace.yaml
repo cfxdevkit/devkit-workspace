@@ -1,4 +1,5 @@
 packages:
+  - conflux-wallet
   - contracts
   - dapp
   - ui-shared

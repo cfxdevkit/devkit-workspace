@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Fluent Wallet — Diagnostic Lab</title>
+  <style>
+    :root {
+      --bg: #0d0d0f;
+      --card: #141417;
+      --border: #2a2a30;
+      --accent: #6ee7b7;
+      --warn: #fbbf24;
+      --err: #f87171;
+      --ok: #34d399;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --mono: 'JetBrains Mono', 'Fira Code', monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: system-ui, sans-serif; font-size: 14px; }
+    h1 { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.03em; color: #fff; }
+    h2 { font-size: .85rem; font-weight: 800; text-transform: uppercase; letter-spacing: .12em; color: var(--accent); margin-bottom: .75rem; }
+    .layout { max-width: 1200px; margin: 0 auto; padding: 1.5rem; display: grid; gap: 1rem; }
+    .header { display: flex; align-items: center; gap: 1rem; padding: 1rem 1.5rem; background: var(--card); border: 1px solid var(--border); border-radius: 1rem; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex-shrink: 0; }
+    .dot.ok { background: var(--ok); box-shadow: 0 0 6px var(--ok); }
+    .dot.err { background: var(--err); }
+    .dot.warn { background: var(--warn); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 1rem; padding: 1.25rem; display: flex; flex-direction: column; gap: .75rem; }
+    .card.wide { grid-column: 1 / -1; }
+    .row { display: flex; justify-content: space-between; align-items: center; gap: .5rem; border-bottom: 1px solid var(--border); padding: .4rem 0; }
+    .row:last-child { border: none; }
+    .label { font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .15em; color: var(--muted); }
+    .val { font-family: var(--mono); font-size: .75rem; color: var(--text); text-align: right; word-break: break-all; max-width: 200px; }
+    .val.ok { color: var(--ok); }
+    .val.err { color: var(--err); }
+    .val.warn { color: var(--warn); }
+    .btn { cursor: pointer; font-size: .75rem; font-weight: 800; text-transform: uppercase; letter-spacing: .1em; border: 1px solid var(--border); background: #1e1e24; color: var(--text); padding: .4rem .9rem; border-radius: .5rem; transition: background .15s; }
+    .btn:hover:not(:disabled) { background: #2a2a32; border-color: var(--accent); color: var(--accent); }
+    .btn:disabled { opacity: .4; cursor: not-allowed; }
+    .btn.primary { background: var(--accent)/10; border-color: var(--accent); color: var(--accent); }
+    .actions { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .25rem; }
+    pre { font-family: var(--mono); font-size: .7rem; background: #0a0a0c; border: 1px solid var(--border); border-radius: .5rem; padding: .75rem; overflow-x: auto; white-space: pre-wrap; word-break: break-all; max-height: 240px; overflow-y: auto; }
+    .log-entry { padding: .2rem 0; border-bottom: 1px solid #1a1a20; }
+    .log-entry:last-child { border: none; }
+    .log-entry .ts { color: var(--muted); font-size: .65rem; }
+    .log-entry .msg { color: var(--text); }
+    .log-entry.ok .msg { color: var(--ok); }
+    .log-entry.err .msg { color: var(--err); }
+    .log-entry.warn .msg { color: var(--warn); }
+    .log-entry.info .msg { color: #93c5fd; }
+    input[type=text], input[type=number] {
+      background: #0a0a0c; border: 1px solid var(--border); color: var(--text);
+      padding: .35rem .6rem; border-radius: .4rem; font-family: var(--mono); font-size: .75rem; width: 100%;
+    }
+    .section-title { font-size: .7rem; font-weight: 900; text-transform: uppercase; letter-spacing: .18em; color: var(--muted); margin-bottom: .5rem; }
+    select { background: #0a0a0c; border: 1px solid var(--border); color: var(--text); padding: .35rem .6rem; border-radius: .4rem; font-size: .75rem; }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="dot" id="global-dot"></div>
+    <div>
+      <h1>Fluent Wallet — Diagnostic Lab</h1>
+      <div style="color:var(--muted); font-size:.75rem; margin-top:.2rem" id="global-status">Detecting providers…</div>
+    </div>
+    <div style="margin-left:auto; display:flex; gap:.5rem">
+      <button class="btn" onclick="runFullScan()">Scan All</button>
+      <button class="btn" onclick="clearLog()">Clear Log</button>
+    </div>
+  </div>
+
+  <!-- Provider detection -->
+  <div class="grid">
+    <div class="card">
+      <h2>Provider Detection</h2>
+      <div class="row"><span class="label">window.fluent</span><span class="val" id="det-fluent">—</span></div>
+      <div class="row"><span class="label">window.conflux</span><span class="val" id="det-conflux">—</span></div>
+      <div class="row"><span class="label">window.ethereum</span><span class="val" id="det-ethereum">—</span></div>
+      <div class="row"><span class="label">isFluent flag</span><span class="val" id="det-isfluent">—</span></div>
+      <div class="row"><span class="label">Active provider</span><span class="val" id="det-active">—</span></div>
+      <div class="actions">
+        <button class="btn" onclick="detectProviders()">Re-detect</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Wallet State</h2>
+      <div class="row"><span class="label">Address</span><span class="val" id="ws-address">—</span></div>
+      <div class="row"><span class="label">Chain ID (hex)</span><span class="val" id="ws-chainid">—</span></div>
+      <div class="row"><span class="label">Chain ID (dec)</span><span class="val" id="ws-chainid-dec">—</span></div>
+      <div class="row"><span class="label">Balance (CFX)</span><span class="val" id="ws-balance">—</span></div>
+      <div class="row"><span class="label">Lock state</span><span class="val" id="ws-lock">—</span></div>
+      <div class="actions">
+        <button class="btn" onclick="refreshWalletState()">Refresh</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Node (Direct HTTP RPC)</h2>
+      <div style="margin-bottom:.5rem">
+        <div class="section-title">Core RPC URL</div>
+        <input type="text" id="rpc-url" value="http://localhost:12537" />
+      </div>
+      <div class="row"><span class="label">Node status</span><span class="val" id="node-status">—</span></div>
+      <div class="row"><span class="label">Epoch</span><span class="val" id="node-epoch">—</span></div>
+      <div class="row"><span class="label">Chain ID</span><span class="val" id="node-chainid">—</span></div>
+      <div class="row"><span class="label">eSpace chain ID</span><span class="val" id="node-espace-chainid">—</span></div>
+      <div class="actions">
+        <button class="btn" onclick="pingNode()">Ping Node</button>
+        <button class="btn" onclick="fetchNodeInfo()">Fetch Info</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Connect approaches -->
+  <div class="grid">
+
+    <!-- Approach 1: Raw window.fluent -->
+    <div class="card">
+      <h2>① window.fluent — Raw RPC</h2>
+      <div class="section-title">cive docs alias — likely NOT the Core Space provider</div>
+      <div class="row"><span class="label">Result</span><span class="val" id="a1-result">—</span></div>
+      <div class="row"><span class="label">Error</span><span class="val err" id="a1-error">—</span></div>
+      <div class="actions">
+        <button class="btn primary" onclick="approach1_fluentRaw()">Request Accounts</button>
+        <button class="btn" onclick="approach1_fluentChainId()">cfx_chainId</button>
+        <button class="btn" onclick="approach1_fluentAccounts()">cfx_accounts</button>
+      </div>
+    </div>
+
+    <!-- Approach 2: window.conflux -->
+    <div class="card">
+      <h2>② window.conflux — Raw RPC ✓ CORRECT</h2>
+      <div class="section-title">Fluent injects Core Space here (isFluent=true). This is the right one.</div>
+      <div class="row"><span class="label">Result</span><span class="val" id="a2-result">—</span></div>
+      <div class="row"><span class="label">Error</span><span class="val err" id="a2-error">—</span></div>
+      <div class="actions">
+        <button class="btn primary" onclick="approach2_confluxRaw()">Request Accounts</button>
+        <button class="btn" onclick="approach2_confluxChainId()">cfx_chainId</button>
+        <button class="btn" onclick="approach2_confluxAccounts()">cfx_accounts</button>
+      </div>
+    </div>
+
+    <!-- Approach 3: Add chain first, then connect -->
+    <div class="card">
+      <h2>③ Add Chain → Connect</h2>
+      <div class="section-title">Register local chain before requesting accounts</div>
+      <div style="margin-bottom:.5rem">
+        <div class="section-title">Chain ID (hex, e.g. 0x7ed for 2029)</div>
+        <input type="text" id="add-chain-id" value="0x7ed" />
+      </div>
+      <div class="row"><span class="label">Result</span><span class="val" id="a3-result">—</span></div>
+      <div class="row"><span class="label">Error</span><span class="val err" id="a3-error">—</span></div>
+      <div class="actions">
+        <button class="btn" onclick="approach3_addChainFluent()">Add via window.fluent</button>
+        <button class="btn" onclick="approach3_addChainConflux()">Add via window.conflux</button>
+        <button class="btn primary" onclick="approach3_fullFlow()">Full flow (add → wait → connect)</button>
+      </div>
+    </div>
+
+    <!-- Approach 4: Retry loop -->
+    <div class="card">
+      <h2>④ Retry Loop (poll until ready)</h2>
+      <div class="section-title">Retry cfx_requestAccounts up to N times</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:.5rem; margin-bottom:.5rem">
+        <div>
+          <div class="section-title">Max retries</div>
+          <input type="number" id="retry-max" value="10" min="1" max="30" />
+        </div>
+        <div>
+          <div class="section-title">Delay (ms)</div>
+          <input type="number" id="retry-delay" value="500" min="100" max="5000" />
+        </div>
+      </div>
+      <div class="row"><span class="label">Attempt</span><span class="val" id="a4-attempt">—</span></div>
+      <div class="row"><span class="label">Result</span><span class="val" id="a4-result">—</span></div>
+      <div class="row"><span class="label">Error</span><span class="val err" id="a4-error">—</span></div>
+      <div class="actions">
+        <button class="btn primary" id="a4-btn" onclick="approach4_retryLoop()">Start Retry Loop</button>
+      </div>
+    </div>
+
+    <!-- Approach 5: cive via esm.sh -->
+    <div class="card">
+      <h2>⑤ cive — walletClient.requestAddresses()</h2>
+      <div class="section-title">Dynamic import from esm.sh CDN</div>
+      <div style="margin-bottom:.5rem">
+        <div class="section-title">Provider</div>
+        <select id="cive-provider">
+          <option value="conflux" selected>window.conflux ✓ (Core Space)</option>
+          <option value="fluent">window.fluent (eSpace alias)</option>
+        </select>
+      </div>
+      <div class="row"><span class="label">Import status</span><span class="val" id="a5-import">Not imported</span></div>
+      <div class="row"><span class="label">Address</span><span class="val" id="a5-address">—</span></div>
+      <div class="row"><span class="label">Chain ID</span><span class="val" id="a5-chainid">—</span></div>
+      <div class="row"><span class="label">Error</span><span class="val err" id="a5-error">—</span></div>
+      <div class="actions">
+        <button class="btn" onclick="approach5_importCive()">Import cive</button>
+        <button class="btn primary" onclick="approach5_civeConnect()">cive.requestAddresses()</button>
+        <button class="btn" onclick="approach5_civeGetChainId()">getChainId()</button>
+      </div>
+    </div>
+
+    <!-- Approach 6: Switch chain -->
+    <div class="card">
+      <h2>⑥ Switch / Add Chain</h2>
+      <div class="section-title">Force Fluent to the local Core network</div>
+      <div style="margin-bottom:.5rem">
+        <div class="section-title">Chain ID hex</div>
+        <input type="text" id="switch-chainid" value="0x7ed" />
+      </div>
+      <div class="row"><span class="label">Result</span><span class="val" id="a6-result">—</span></div>
+      <div class="row"><span class="label">Error</span><span class="val err" id="a6-error">—</span></div>
+      <div class="actions">
+        <button class="btn" onclick="approach6_switchChain()">wallet_switchConfluxChain</button>
+        <button class="btn" onclick="approach6_addLocalChain()">wallet_addConfluxChain (local)</button>
+        <button class="btn primary" onclick="approach6_addAndSwitch()">Add + Switch + Connect</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Raw RPC playground -->
+  <div class="card wide">
+    <h2>Raw RPC Playground</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+      <div>
+        <div class="section-title">Provider</div>
+        <select id="raw-provider" style="margin-bottom:.5rem; width:100%">
+          <option value="conflux" selected>window.conflux ✓ (Core Space)</option>
+          <option value="fluent">window.fluent (eSpace alias)</option>
+          <option value="node">Direct HTTP to node</option>
+        </select>
+        <div class="section-title" style="margin-top:.5rem">Method</div>
+        <input type="text" id="raw-method" value="cfx_requestAccounts" style="margin-bottom:.5rem" />
+        <div class="section-title">Params (JSON array)</div>
+        <input type="text" id="raw-params" value="[]" />
+        <div class="actions" style="margin-top:.75rem">
+          <button class="btn primary" onclick="rawRpc()">Send</button>
+          <select id="raw-preset" onchange="loadPreset(this.value)" style="font-size:.75rem">
+            <option value="">— Presets —</option>
+            <option value="cfx_requestAccounts">cfx_requestAccounts</option>
+            <option value="cfx_accounts">cfx_accounts</option>
+            <option value="cfx_chainId">cfx_chainId</option>
+            <option value="cfx_getStatus">cfx_getStatus</option>
+            <option value="cfx_gasPrice">cfx_gasPrice</option>
+            <option value="wallet_switchConfluxChain">wallet_switchConfluxChain (0x7ed)</option>
+            <option value="wallet_requestPermissions">wallet_requestPermissions</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <div class="section-title">Response</div>
+        <pre id="raw-result" style="height:180px">—</pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Event log -->
+  <div class="card wide">
+    <h2>Event Log</h2>
+    <div id="log" style="font-family:var(--mono); font-size:.7rem; max-height:320px; overflow-y:auto; background:#0a0a0c; border:1px solid var(--border); border-radius:.5rem; padding:.75rem;">
+      <div class="log-entry info"><span class="ts">[init]</span> <span class="msg">Page loaded. Click "Scan All" to begin.</span></div>
+    </div>
+  </div>
+
+  <!-- Provider dump -->
+  <div class="card wide">
+    <h2>Provider Property Dump</h2>
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem">
+      <div>
+        <div class="section-title">window.fluent</div>
+        <pre id="dump-fluent">—</pre>
+      </div>
+      <div>
+        <div class="section-title">window.conflux</div>
+        <pre id="dump-conflux">—</pre>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ─── Utils ────────────────────────────────────────────────────────────────────
+
+function ts() {
+  return new Date().toLocaleTimeString('en', { hour12: false, hour:'2-digit', minute:'2-digit', second:'2-digit', fractionalSecondDigits: 2 });
+}
+
+function log(msg, type = 'info') {
+  const el = document.getElementById('log');
+  const entry = document.createElement('div');
+  entry.className = `log-entry ${type}`;
+  entry.innerHTML = `<span class="ts">[${ts()}]</span> <span class="msg">${escHtml(msg)}</span>`;
+  el.prepend(entry);
+}
+
+function clearLog() {
+  document.getElementById('log').innerHTML = '<div class="log-entry info"><span class="ts">[clear]</span> <span class="msg">Log cleared.</span></div>';
+}
+
+function escHtml(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function set(id, val, cls) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = val == null ? '—' : String(val);
+  if (cls) el.className = `val ${cls}`;
+}
+
+function wait(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+function hexToNum(hex) {
+  if (!hex) return null;
+  return parseInt(hex, 16);
+}
+
+function formatCfx(drip) {
+  try {
+    const n = BigInt(drip);
+    return (Number(n) / 1e18).toFixed(4) + ' CFX';
+  } catch { return drip; }
+}
+
+function fmtError(e) {
+  if (!e) return '—';
+  return e.message ?? String(e);
+}
+
+// ─── Provider resolution ──────────────────────────────────────────────────────
+
+function getProvider(key = 'fluent') {
+  if (key === 'fluent') return window.fluent ?? null;
+  if (key === 'conflux') return window.conflux ?? null;
+  return null;
+}
+
+function getBestProvider() {
+  return window.fluent ?? window.conflux ?? null;
+}
+
+// ─── Node RPC ─────────────────────────────────────────────────────────────────
+
+async function nodeRpc(method, params = [], url) {
+  const rpcUrl = url ?? document.getElementById('rpc-url')?.value ?? 'http://localhost:12537';
+  const res = await fetch(rpcUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }),
+  });
+  const json = await res.json();
+  if (json.error) throw Object.assign(new Error(json.error.message ?? 'RPC error'), { code: json.error.code });
+  return json.result;
+}
+
+// ─── Section 1: Provider Detection ───────────────────────────────────────────
+
+function detectProviders() {
+  const hasFluent = !!window.fluent;
+  const hasConflux = !!window.conflux;
+  const hasEthereum = !!window.ethereum;
+
+  set('det-fluent', hasFluent ? 'YES ✓' : 'NOT FOUND', hasFluent ? 'ok' : 'err');
+  set('det-conflux', hasConflux ? 'YES ✓' : 'NOT FOUND', hasConflux ? 'ok' : 'err');
+  set('det-ethereum', hasEthereum ? 'YES ✓' : 'NOT FOUND', hasEthereum ? 'warn' : '');
+  // Fluent Core Space injects as window.conflux (isFluent=true), confirmed by @cfxjs/use-wallet source.
+  const isFluentOnConflux = !!window.conflux?.isFluent;
+  set('det-isfluent', isFluentOnConflux ? 'true (on window.conflux ✓)' : (window.fluent?.isFluent ? 'true (on window.fluent)' : 'false'), isFluentOnConflux ? 'ok' : (window.fluent?.isFluent ? 'warn' : 'err'));
+
+  // window.conflux is the correct Core Space provider; window.fluent may be undefined or eSpace
+  const active = hasConflux && isFluentOnConflux ? 'window.conflux (isFluent ✓)' : hasConflux ? 'window.conflux (no isFluent!)' : hasFluent ? 'window.fluent only' : 'NONE';
+  set('det-active', active, hasConflux ? 'ok' : hasFluent ? 'warn' : 'err');
+
+  // Global dot
+  const dot = document.getElementById('global-dot');
+  const status = document.getElementById('global-status');
+  if (hasConflux) {
+    dot.className = isFluentOnConflux ? 'dot ok' : 'dot warn';
+    status.textContent = `window.conflux detected — isFluent=${isFluentOnConflux} (use window.conflux for Core Space)`;
+  } else if (hasFluent) {
+    dot.className = 'dot warn';
+    status.textContent = 'Only window.fluent found — Core Space may not work. Expected window.conflux.';
+  } else {
+    dot.className = 'dot err';
+    status.textContent = 'No Fluent provider found. Is the extension installed and enabled?';
+  }
+
+  log(`Providers: fluent=${hasFluent}, conflux=${hasConflux}, ethereum=${hasEthereum}`, hasFluent || hasConflux ? 'ok' : 'err');
+
+  // Dump properties
+  dumpProvider('fluent', 'dump-fluent');
+  dumpProvider('conflux', 'dump-conflux');
+}
+
+function dumpProvider(key, containerId) {
+  const p = getProvider(key);
+  const el = document.getElementById(containerId);
+  if (!p) { el.textContent = 'Not available'; return; }
+  try {
+    const keys = [];
+    let obj = p;
+    while (obj && obj !== Object.prototype) {
+      keys.push(...Object.getOwnPropertyNames(obj));
+      obj = Object.getPrototypeOf(obj);
+    }
+    const unique = [...new Set(keys)].sort();
+    const info = {};
+    for (const k of unique) {
+      try {
+        const v = p[k];
+        info[k] = typeof v === 'function' ? '[Function]' : v;
+      } catch { info[k] = '[Error reading]'; }
+    }
+    el.textContent = JSON.stringify(info, null, 2);
+  } catch(e) {
+    el.textContent = `Error dumping: ${e.message}`;
+  }
+}
+
+// ─── Wallet State ─────────────────────────────────────────────────────────────
+
+async function refreshWalletState() {
+  const p = getBestProvider();
+  if (!p) { log('No provider for wallet state refresh', 'err'); return; }
+  try {
+    const [accounts, chainId] = await Promise.all([
+      p.request({ method: 'cfx_accounts' }).catch(() => []),
+      p.request({ method: 'cfx_chainId' }).catch(() => null),
+    ]);
+    const addr = Array.isArray(accounts) ? accounts[0] : null;
+    set('ws-address', addr ?? 'Not connected', addr ? 'ok' : 'warn');
+    const chainNum = hexToNum(chainId);
+    set('ws-chainid', chainId ?? '—', chainId ? '' : 'warn');
+    set('ws-chainid-dec', chainNum ?? '—');
+
+    if (addr) {
+      try {
+        const balance = await p.request({ method: 'cfx_getBalance', params: [addr, 'latest_state'] });
+        set('ws-balance', formatCfx(balance), 'ok');
+      } catch (e) {
+        set('ws-balance', `Error: ${e.message}`, 'err');
+      }
+    }
+
+    // Try to detect lock state
+    try {
+      const isLocked = await p.request({ method: 'wallet_isLocked' }).catch(() => null);
+      set('ws-lock', isLocked === null ? 'N/A' : (isLocked ? 'LOCKED' : 'UNLOCKED'), isLocked ? 'err' : 'ok');
+    } catch {
+      set('ws-lock', 'N/A');
+    }
+
+    log(`Wallet state: addr=${addr ?? 'none'}, chainId=${chainId ?? 'none'}`, addr ? 'ok' : 'warn');
+  } catch(e) {
+    log(`Wallet state error: ${fmtError(e)}`, 'err');
+  }
+}
+
+// ─── Node ─────────────────────────────────────────────────────────────────────
+
+async function pingNode() {
+  try {
+    const result = await nodeRpc('cfx_clientVersion');
+    set('node-status', `OK — ${result}`, 'ok');
+    log(`Node ping OK: ${result}`, 'ok');
+  } catch(e) {
+    set('node-status', `FAIL: ${e.message}`, 'err');
+    log(`Node ping FAIL: ${fmtError(e)}`, 'err');
+  }
+}
+
+async function fetchNodeInfo() {
+  try {
+    const [status, chainId] = await Promise.all([
+      nodeRpc('cfx_getStatus'),
+      nodeRpc('cfx_chainId'),
+    ]);
+    set('node-epoch', status?.epochNumber ?? '—', 'ok');
+    set('node-chainid', `${chainId} (${hexToNum(chainId)})`, 'ok');
+
+    // Try eSpace chain ID via eth_chainId on port 8545
+    try {
+      const rpcUrl = document.getElementById('rpc-url').value.replace(':12537', ':8545');
+      const espaceChainId = await nodeRpc('eth_chainId', [], rpcUrl);
+      set('node-espace-chainid', `${espaceChainId} (${hexToNum(espaceChainId)})`, 'ok');
+    } catch {
+      set('node-espace-chainid', 'N/A or different port');
+    }
+
+    log(`Node info: epoch=${status?.epochNumber}, coreChainId=${chainId}`, 'ok');
+  } catch(e) {
+    log(`Node info error: ${fmtError(e)}`, 'err');
+    set('node-status', `Error: ${e.message}`, 'err');
+  }
+}
+
+// ─── Approach 1: window.fluent raw ───────────────────────────────────────────
+
+async function approach1_fluentRaw() {
+  set('a1-error', '—'); set('a1-result', '…');
+  log('[A1] window.fluent cfx_requestAccounts…', 'info');
+  try {
+    if (!window.fluent) throw new Error('window.fluent not found');
+    const result = await window.fluent.request({ method: 'cfx_requestAccounts' });
+    set('a1-result', JSON.stringify(result), 'ok');
+    log(`[A1] ✓ ${JSON.stringify(result)}`, 'ok');
+  } catch(e) {
+    set('a1-error', fmtError(e), 'err');
+    set('a1-result', 'FAILED');
+    log(`[A1] ✗ code=${e.code} ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach1_fluentChainId() {
+  try {
+    if (!window.fluent) throw new Error('window.fluent not found');
+    const result = await window.fluent.request({ method: 'cfx_chainId' });
+    set('a1-result', `chainId: ${result} (${hexToNum(result)})`, 'ok');
+    log(`[A1] cfx_chainId=${result}`, 'ok');
+  } catch(e) {
+    set('a1-error', fmtError(e));
+    log(`[A1] cfx_chainId error: ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach1_fluentAccounts() {
+  try {
+    if (!window.fluent) throw new Error('window.fluent not found');
+    const result = await window.fluent.request({ method: 'cfx_accounts' });
+    set('a1-result', JSON.stringify(result), result?.length ? 'ok' : 'warn');
+    log(`[A1] cfx_accounts=${JSON.stringify(result)}`, result?.length ? 'ok' : 'warn');
+  } catch(e) {
+    set('a1-error', fmtError(e));
+    log(`[A1] cfx_accounts error: ${fmtError(e)}`, 'err');
+  }
+}
+
+// ─── Approach 2: window.conflux raw ──────────────────────────────────────────
+
+async function approach2_confluxRaw() {
+  set('a2-error', '—'); set('a2-result', '…');
+  log('[A2] window.conflux cfx_requestAccounts…', 'info');
+  try {
+    if (!window.conflux) throw new Error('window.conflux not found');
+    const result = await window.conflux.request({ method: 'cfx_requestAccounts' });
+    set('a2-result', JSON.stringify(result), 'ok');
+    log(`[A2] ✓ ${JSON.stringify(result)}`, 'ok');
+  } catch(e) {
+    set('a2-error', fmtError(e), 'err');
+    set('a2-result', 'FAILED');
+    log(`[A2] ✗ code=${e.code} ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach2_confluxChainId() {
+  try {
+    if (!window.conflux) throw new Error('window.conflux not found');
+    const result = await window.conflux.request({ method: 'cfx_chainId' });
+    set('a2-result', `chainId: ${result} (${hexToNum(result)})`, 'ok');
+    log(`[A2] cfx_chainId=${result}`, 'ok');
+  } catch(e) {
+    set('a2-error', fmtError(e));
+    log(`[A2] cfx_chainId error: ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach2_confluxAccounts() {
+  try {
+    if (!window.conflux) throw new Error('window.conflux not found');
+    const result = await window.conflux.request({ method: 'cfx_accounts' });
+    set('a2-result', JSON.stringify(result), result?.length ? 'ok' : 'warn');
+    log(`[A2] cfx_accounts=${JSON.stringify(result)}`, result?.length ? 'ok' : 'warn');
+  } catch(e) {
+    set('a2-error', fmtError(e));
+    log(`[A2] cfx_accounts error: ${fmtError(e)}`, 'err');
+  }
+}
+
+// ─── Approach 3: Add chain first ─────────────────────────────────────────────
+
+function buildLocalChainParams(chainIdHex, rpcUrl) {
+  return {
+    chainId: chainIdHex,
+    chainName: 'Conflux Core Local',
+    nativeCurrency: { name: 'Conflux', symbol: 'CFX', decimals: 18 },
+    rpcUrls: [rpcUrl ?? document.getElementById('rpc-url')?.value ?? 'http://localhost:12537'],
+  };
+}
+
+async function approach3_addChainFluent() {
+  const chainId = document.getElementById('add-chain-id').value.trim();
+  log(`[A3] wallet_addConfluxChain via window.fluent (chainId=${chainId})…`, 'info');
+  try {
+    if (!window.fluent) throw new Error('window.fluent not found');
+    await window.fluent.request({
+      method: 'wallet_addConfluxChain',
+      params: [buildLocalChainParams(chainId)],
+    });
+    set('a3-result', 'Chain added ✓', 'ok');
+    log('[A3] ✓ Chain added via window.fluent', 'ok');
+  } catch(e) {
+    set('a3-error', fmtError(e), 'err');
+    log(`[A3] ✗ ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach3_addChainConflux() {
+  const chainId = document.getElementById('add-chain-id').value.trim();
+  log(`[A3] wallet_addConfluxChain via window.conflux (chainId=${chainId})…`, 'info');
+  try {
+    if (!window.conflux) throw new Error('window.conflux not found');
+    await window.conflux.request({
+      method: 'wallet_addConfluxChain',
+      params: [buildLocalChainParams(chainId)],
+    });
+    set('a3-result', 'Chain added ✓', 'ok');
+    log('[A3] ✓ Chain added via window.conflux', 'ok');
+  } catch(e) {
+    set('a3-error', fmtError(e), 'err');
+    log(`[A3] ✗ ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach3_fullFlow() {
+  const chainId = document.getElementById('add-chain-id').value.trim();
+  const p = getBestProvider();
+  if (!p) { log('[A3] No provider', 'err'); return; }
+  set('a3-result', 'Running…'); set('a3-error', '—');
+  log('[A3] Full flow: add chain → wait 500ms → cfx_requestAccounts…', 'info');
+
+  try {
+    // Step 1: add chain (ignore errors — already added is fine)
+    try {
+      await p.request({ method: 'wallet_addConfluxChain', params: [buildLocalChainParams(chainId)] });
+      log('[A3] Chain registered', 'ok');
+    } catch(e) {
+      log(`[A3] Add chain: ${fmtError(e)} (continuing)`, 'warn');
+    }
+
+    // Step 2: wait for wallet to settle
+    await wait(500);
+
+    // Step 3: request accounts
+    const accounts = await p.request({ method: 'cfx_requestAccounts' });
+    set('a3-result', JSON.stringify(accounts), 'ok');
+    log(`[A3] ✓ Connected: ${JSON.stringify(accounts)}`, 'ok');
+  } catch(e) {
+    set('a3-error', fmtError(e), 'err');
+    log(`[A3] ✗ code=${e.code} ${fmtError(e)}`, 'err');
+  }
+}
+
+// ─── Approach 4: Retry loop ───────────────────────────────────────────────────
+
+let retryAbort = false;
+
+async function approach4_retryLoop() {
+  const maxRetries = parseInt(document.getElementById('retry-max').value) || 10;
+  const delayMs = parseInt(document.getElementById('retry-delay').value) || 500;
+  const p = getBestProvider();
+  if (!p) { log('[A4] No provider', 'err'); return; }
+
+  retryAbort = false;
+  const btn = document.getElementById('a4-btn');
+  btn.textContent = 'Stop';
+  btn.onclick = () => { retryAbort = true; btn.textContent = 'Start Retry Loop'; btn.onclick = approach4_retryLoop; };
+
+  set('a4-result', 'Running…'); set('a4-error', '—');
+  log(`[A4] Retry loop: max=${maxRetries}, delay=${delayMs}ms…`, 'info');
+
+  for (let i = 1; i <= maxRetries; i++) {
+    if (retryAbort) { log('[A4] Aborted', 'warn'); break; }
+    set('a4-attempt', `${i}/${maxRetries}`);
+    try {
+      const accounts = await p.request({ method: 'cfx_requestAccounts' });
+      set('a4-result', JSON.stringify(accounts), 'ok');
+      set('a4-attempt', `✓ on attempt ${i}`);
+      log(`[A4] ✓ Success on attempt ${i}: ${JSON.stringify(accounts)}`, 'ok');
+      btn.textContent = 'Start Retry Loop';
+      btn.onclick = approach4_retryLoop;
+      return;
+    } catch(e) {
+      set('a4-error', `[${i}] code=${e.code}: ${fmtError(e)}`, 'err');
+      log(`[A4] attempt ${i}/${maxRetries}: code=${e.code} ${fmtError(e)}`, e.code === -32602 ? 'warn' : 'err');
+      if (i < maxRetries) await wait(delayMs);
+    }
+  }
+
+  log('[A4] Retry loop exhausted', 'err');
+  btn.textContent = 'Start Retry Loop';
+  btn.onclick = approach4_retryLoop;
+}
+
+// ─── Approach 5: cive via esm.sh ─────────────────────────────────────────────
+
+let civeModule = null;
+
+async function approach5_importCive() {
+  log('[A5] Importing cive from esm.sh…', 'info');
+  set('a5-import', 'Loading…', 'warn');
+  try {
+    civeModule = await import('https://esm.sh/cive@0.8.1');
+    set('a5-import', 'Loaded ✓', 'ok');
+    log('[A5] cive loaded from esm.sh', 'ok');
+  } catch(e) {
+    set('a5-import', `FAILED: ${e.message}`, 'err');
+    log(`[A5] cive import error: ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach5_civeConnect() {
+  if (!civeModule) {
+    log('[A5] cive not imported yet', 'warn');
+    await approach5_importCive();
+    if (!civeModule) return;
+  }
+  // IMPORTANT: use window.conflux (not window.fluent) for Fluent Core Space
+  const providerKey = document.getElementById('cive-provider').value;
+  const provider = getProvider(providerKey);
+  if (!provider) { log(`[A5] window.${providerKey} not found`, 'err'); return; }
+
+  log(`[A5] cive.createWalletClient({ transport: custom(window.${providerKey}) }).requestAddresses()…`, 'info');
+  set('a5-error', '—');
+  try {
+    const { createWalletClient, custom } = civeModule;
+    const wc = createWalletClient({ transport: custom(provider) });
+    const addresses = await wc.requestAddresses();
+    set('a5-address', addresses[0] ?? 'empty', addresses[0] ? 'ok' : 'warn');
+    log(`[A5] ✓ ${JSON.stringify(addresses)}`, 'ok');
+  } catch(e) {
+    set('a5-error', `code=${e.code}: ${fmtError(e)}`, 'err');
+    log(`[A5] ✗ code=${e.code} ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach5_civeGetChainId() {
+  if (!civeModule) { log('[A5] cive not imported yet', 'warn'); return; }
+  const providerKey = document.getElementById('cive-provider').value;
+  const provider = getProvider(providerKey);
+  if (!provider) { log(`[A5] window.${providerKey} not found`, 'err'); return; }
+
+  try {
+    const { createWalletClient, custom } = civeModule;
+    const wc = createWalletClient({ transport: custom(provider) });
+    const chainId = await wc.getChainId();
+    set('a5-chainid', `${chainId} (0x${chainId.toString(16)})`, 'ok');
+    log(`[A5] chainId=${chainId}`, 'ok');
+  } catch(e) {
+    set('a5-error', fmtError(e), 'err');
+    log(`[A5] getChainId error: ${fmtError(e)}`, 'err');
+  }
+}
+
+// ─── Approach 6: Switch/Add chain ────────────────────────────────────────────
+
+async function approach6_switchChain() {
+  const chainId = document.getElementById('switch-chainid').value.trim();
+  const p = getBestProvider();
+  if (!p) { log('[A6] No provider', 'err'); return; }
+  log(`[A6] wallet_switchConfluxChain chainId=${chainId}…`, 'info');
+  try {
+    await p.request({ method: 'wallet_switchConfluxChain', params: [{ chainId }] });
+    set('a6-result', `Switched to ${chainId} ✓`, 'ok');
+    log(`[A6] ✓ Switched to ${chainId}`, 'ok');
+  } catch(e) {
+    set('a6-error', fmtError(e), 'err');
+    log(`[A6] ✗ code=${e.code} ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach6_addLocalChain() {
+  const chainId = document.getElementById('switch-chainid').value.trim();
+  const rpcUrl = document.getElementById('rpc-url').value.trim();
+  const p = getBestProvider();
+  if (!p) { log('[A6] No provider', 'err'); return; }
+  log(`[A6] wallet_addConfluxChain chainId=${chainId}, rpc=${rpcUrl}…`, 'info');
+  try {
+    await p.request({
+      method: 'wallet_addConfluxChain',
+      params: [{
+        chainId,
+        chainName: 'Conflux Core Local',
+        nativeCurrency: { name: 'Conflux', symbol: 'CFX', decimals: 18 },
+        rpcUrls: [rpcUrl],
+      }],
+    });
+    set('a6-result', `Chain ${chainId} added ✓`, 'ok');
+    log(`[A6] ✓ Chain added`, 'ok');
+  } catch(e) {
+    set('a6-error', fmtError(e), 'err');
+    log(`[A6] ✗ code=${e.code} ${fmtError(e)}`, 'err');
+  }
+}
+
+async function approach6_addAndSwitch() {
+  const chainId = document.getElementById('switch-chainid').value.trim();
+  const rpcUrl = document.getElementById('rpc-url').value.trim();
+  const p = getBestProvider();
+  if (!p) { log('[A6] No provider', 'err'); return; }
+  set('a6-result', 'Running…'); set('a6-error', '—');
+  log(`[A6] Add + Switch + Connect: chainId=${chainId}…`, 'info');
+
+  // Step 1: add
+  try {
+    await p.request({
+      method: 'wallet_addConfluxChain',
+      params: [{ chainId, chainName: 'Conflux Core Local', nativeCurrency: { name: 'Conflux', symbol: 'CFX', decimals: 18 }, rpcUrls: [rpcUrl] }],
+    });
+    log('[A6] Chain added', 'ok');
+  } catch(e) {
+    log(`[A6] Add chain: ${fmtError(e)} (continuing)`, 'warn');
+  }
+
+  await wait(300);
+
+  // Step 2: switch
+  try {
+    await p.request({ method: 'wallet_switchConfluxChain', params: [{ chainId }] });
+    log('[A6] Chain switched', 'ok');
+  } catch(e) {
+    log(`[A6] Switch chain: ${fmtError(e)} (continuing)`, 'warn');
+  }
+
+  await wait(500);
+
+  // Step 3: connect
+  try {
+    const accounts = await p.request({ method: 'cfx_requestAccounts' });
+    set('a6-result', JSON.stringify(accounts), 'ok');
+    log(`[A6] ✓ Connected: ${JSON.stringify(accounts)}`, 'ok');
+  } catch(e) {
+    set('a6-error', fmtError(e), 'err');
+    log(`[A6] ✗ code=${e.code} ${fmtError(e)}`, 'err');
+  }
+}
+
+// ─── Raw RPC Playground ───────────────────────────────────────────────────────
+
+const PRESETS = {
+  'cfx_requestAccounts': { method: 'cfx_requestAccounts', params: [] },
+  'cfx_accounts': { method: 'cfx_accounts', params: [] },
+  'cfx_chainId': { method: 'cfx_chainId', params: [] },
+  'cfx_getStatus': { method: 'cfx_getStatus', params: [] },
+  'cfx_gasPrice': { method: 'cfx_gasPrice', params: [] },
+  'wallet_switchConfluxChain': { method: 'wallet_switchConfluxChain', params: [{ chainId: '0x7ed' }] },
+  'wallet_requestPermissions': { method: 'wallet_requestPermissions', params: [{ cfx_accounts: {} }] },
+};
+
+function loadPreset(key) {
+  const p = PRESETS[key];
+  if (!p) return;
+  document.getElementById('raw-method').value = p.method;
+  document.getElementById('raw-params').value = JSON.stringify(p.params);
+}
+
+async function rawRpc() {
+  const providerKey = document.getElementById('raw-provider').value;
+  const method = document.getElementById('raw-method').value.trim();
+  const paramsStr = document.getElementById('raw-params').value.trim();
+  const resultEl = document.getElementById('raw-result');
+
+  let params;
+  try { params = JSON.parse(paramsStr); } catch { resultEl.textContent = 'Invalid JSON params'; return; }
+
+  log(`[RAW] ${providerKey} → ${method}(${paramsStr})…`, 'info');
+
+  try {
+    let result;
+    if (providerKey === 'node') {
+      result = await nodeRpc(method, params);
+    } else {
+      const p = getProvider(providerKey);
+      if (!p) throw new Error(`window.${providerKey} not available`);
+      result = await p.request({ method, params });
+    }
+    resultEl.textContent = JSON.stringify(result, null, 2);
+    log(`[RAW] ✓ ${method} → ${JSON.stringify(result).slice(0, 80)}`, 'ok');
+  } catch(e) {
+    resultEl.textContent = `ERROR (code ${e.code ?? 'N/A'}):\n${fmtError(e)}`;
+    log(`[RAW] ✗ ${method} code=${e.code} ${fmtError(e)}`, 'err');
+  }
+}
+
+// ─── Full Scan ────────────────────────────────────────────────────────────────
+
+async function runFullScan() {
+  log('=== Full Scan Starting ===', 'info');
+  detectProviders();
+  await refreshWalletState();
+  await pingNode();
+  await fetchNodeInfo();
+  log('=== Full Scan Complete ===', 'info');
+}
+
+// ─── Provider event subscriptions ────────────────────────────────────────────
+
+function subscribeEvents(p, name) {
+  if (!p) return;
+  if (typeof p.on !== 'function') return;
+  p.on('accountsChanged', (accounts) => {
+    log(`[${name}] accountsChanged: ${JSON.stringify(accounts)}`, 'warn');
+    set('ws-address', Array.isArray(accounts) ? (accounts[0] ?? 'disconnected') : String(accounts));
+  });
+  p.on('chainChanged', (chainId) => {
+    log(`[${name}] chainChanged: ${chainId} (${hexToNum(chainId)})`, 'warn');
+    set('ws-chainid', chainId);
+    set('ws-chainid-dec', hexToNum(chainId));
+  });
+  p.on('connect', (info) => log(`[${name}] connect: ${JSON.stringify(info)}`, 'ok'));
+  p.on('disconnect', (err) => log(`[${name}] disconnect: ${JSON.stringify(err)}`, 'warn'));
+  log(`[events] Subscribed to ${name} events`, 'info');
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+
+window.addEventListener('load', () => {
+  // Give extensions 1s to inject
+  setTimeout(() => {
+    detectProviders();
+    subscribeEvents(window.fluent, 'window.fluent');
+    subscribeEvents(window.conflux, 'window.conflux');
+    refreshWalletState();
+    pingNode();
+  }, 1000);
+});
+</script>
+</body>
+</html>

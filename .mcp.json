@@ -1,0 +1,9 @@
+{
+	"mcpServers": {
+		"devkit": {
+			"type": "stdio",
+			"command": "devkit-mcp",
+			"args": []
+		}
+	}
+}

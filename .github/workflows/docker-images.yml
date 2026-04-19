@@ -1,0 +1,239 @@
+name: Docker Images
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - 'packages/devkit-base/**'
+      - 'packages/devkit-backend/**'
+      - 'packages/mcp-server/**'
+      - 'packages/shared/**'
+      - 'packages/vscode-extension/**'
+      - 'apps/dex-ui/**'
+      - 'targets/**'
+      - 'scripts/prepare-devkit-artifacts.mjs'
+      - 'pnpm-lock.yaml'
+      - 'package.json'
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: docker-images-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  BASE_IMAGE_REPOSITORY: ghcr.io/cfxdevkit/devkit-base
+  DEVCONTAINER_IMAGE_REPOSITORY: ghcr.io/cfxdevkit/devkit-devcontainer
+  CODE_SERVER_IMAGE_REPOSITORY: ghcr.io/cfxdevkit/devkit-code-server
+
+jobs:
+  build-base:
+    name: Publish Base Image
+    runs-on: ubuntu-latest
+    outputs:
+      digest: ${{ steps.build.outputs.digest }}
+      image: ${{ steps.refs.outputs.image }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        run: npm install -g pnpm@9.0.0
+
+      - name: Install workspace dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build and prepare base image artifacts
+        run: node ./scripts/prepare-devkit-artifacts.mjs
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute base image references
+        id: refs
+        env:
+          IMAGE: ${{ env.BASE_IMAGE_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          echo "image=${IMAGE}" >> "$GITHUB_OUTPUT"
+          tags_file="$(mktemp)"
+          {
+            printf '%s\n' "${IMAGE}:sha-${GITHUB_SHA::12}"
+
+            if [ "${GITHUB_REF}" = "refs/heads/dev" ]; then
+              printf '%s\n' "${IMAGE}:dev"
+            fi
+
+            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+              version="${GITHUB_REF_NAME#v}"
+              IFS='.' read -r major minor _patch <<< "${version}"
+              printf '%s\n' "${IMAGE}:${version}"
+              printf '%s\n' "${IMAGE}:${major}.${minor}"
+              printf '%s\n' "${IMAGE}:${major}"
+              printf '%s\n' "${IMAGE}:latest"
+            fi
+          } > "$tags_file"
+
+          {
+            echo 'tags<<EOF'
+            cat "$tags_file"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push base image
+        id: build
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: packages/devkit-base/Dockerfile
+          push: true
+          tags: ${{ steps.refs.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=base
+          cache-to: type=gha,mode=max,scope=base
+
+  build-devcontainer:
+    name: Publish Devcontainer Image
+    runs-on: ubuntu-latest
+    needs: build-base
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute devcontainer image references
+        id: refs
+        env:
+          IMAGE: ${{ env.DEVCONTAINER_IMAGE_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          tags_file="$(mktemp)"
+          {
+            printf '%s\n' "${IMAGE}:sha-${GITHUB_SHA::12}"
+
+            if [ "${GITHUB_REF}" = "refs/heads/dev" ]; then
+              printf '%s\n' "${IMAGE}:dev"
+            fi
+
+            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+              version="${GITHUB_REF_NAME#v}"
+              IFS='.' read -r major minor _patch <<< "${version}"
+              printf '%s\n' "${IMAGE}:${version}"
+              printf '%s\n' "${IMAGE}:${major}.${minor}"
+              printf '%s\n' "${IMAGE}:${major}"
+              printf '%s\n' "${IMAGE}:latest"
+            fi
+          } > "$tags_file"
+
+          {
+            echo 'tags<<EOF'
+            cat "$tags_file"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push devcontainer image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: targets/devcontainer/Dockerfile
+          build-args: |
+            BASE_IMAGE=${{ needs.build-base.outputs.image }}@${{ needs.build-base.outputs.digest }}
+          push: true
+          tags: ${{ steps.refs.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=devcontainer
+          cache-to: type=gha,mode=max,scope=devcontainer
+
+  build-code-server:
+    name: Publish Code Server Image
+    runs-on: ubuntu-latest
+    needs: build-base
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute code-server image references
+        id: refs
+        env:
+          IMAGE: ${{ env.CODE_SERVER_IMAGE_REPOSITORY }}
+        run: |
+          set -euo pipefail
+          tags_file="$(mktemp)"
+          {
+            printf '%s\n' "${IMAGE}:sha-${GITHUB_SHA::12}"
+
+            if [ "${GITHUB_REF}" = "refs/heads/dev" ]; then
+              printf '%s\n' "${IMAGE}:dev"
+            fi
+
+            if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
+              version="${GITHUB_REF_NAME#v}"
+              IFS='.' read -r major minor _patch <<< "${version}"
+              printf '%s\n' "${IMAGE}:${version}"
+              printf '%s\n' "${IMAGE}:${major}.${minor}"
+              printf '%s\n' "${IMAGE}:${major}"
+              printf '%s\n' "${IMAGE}:latest"
+            fi
+          } > "$tags_file"
+
+          {
+            echo 'tags<<EOF'
+            cat "$tags_file"
+            echo 'EOF'
+          } >> "$GITHUB_OUTPUT"
+
+      - name: Build and push code-server image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: targets/code-server/Dockerfile
+          build-args: |
+            BASE_IMAGE=${{ needs.build-base.outputs.image }}@${{ needs.build-base.outputs.digest }}
+          push: true
+          tags: ${{ steps.refs.outputs.tags }}
+          labels: |
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.revision=${{ github.sha }}
+          cache-from: type=gha,scope=code-server
+          cache-to: type=gha,mode=max,scope=code-server

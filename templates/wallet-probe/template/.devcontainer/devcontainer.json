@@ -1,0 +1,64 @@
+{
+	"name": "{{PROJECT_NAME}}",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"DEVKIT_DEVCONTAINER_IMAGE": "ghcr.io/cfxdevkit/devkit-devcontainer:dev"
+		}
+	},
+	"updateRemoteUserUID": false,
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "bash",
+				"workbench.startupEditor": "none",
+				"extensions.autoUpdate": false,
+				"extensions.autoCheckUpdates": false,
+				"telemetry.telemetryLevel": "off",
+				"update.mode": "none",
+				"remote.autoForwardPorts": false,
+				"git.ignoreLimitWarning": true,
+				"git.detectSubmodulesLimit": 0,
+				"files.watcherExclude": {
+					"**/node_modules/**": true,
+					"**/.pnpm/**": true,
+					"**/dist/**": true,
+					"**/.devkit/**": true
+				},
+				"files.exclude": {
+					"**/node_modules": true
+				},
+				"cfxdevkit.autoStart": true,
+				"cfxdevkit.port": 7748,
+				"cfxdevkit.espaceRpc": "http://127.0.0.1:8545",
+				"cfxdevkit.coreRpc": "http://127.0.0.1:12537",
+				"cfxdevkit.dexServerScript": "/usr/local/lib/node_modules/@devkit/devkit-dex-ui/server.mjs"
+			},
+			"extensions": [
+				"biomejs.biome",
+				"NomicFoundation.hardhat-solidity"
+			]
+		}
+	},
+	"initializeCommand": ".devcontainer/scripts/detect-docker-socket.sh",
+	"postCreateCommand": "pnpm install",
+	"remoteUser": "node",
+	"mounts": [
+		"source=${localWorkspaceFolder}/.devcontainer/.docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	"workspaceMount": "type=bind,source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},consistency=cached",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"init": true,
+	"overrideCommand": false,
+	"forwardPorts": [3001, 3030, 7748, 8545, 8546, 8888, 12537, 12535],
+	"portsAttributes": {
+		"3001": { "label": "Dapp Dev Server", "onAutoForward": "silent" },
+		"3030": { "label": "Dapp Prod Server", "onAutoForward": "silent" },
+		"7748": { "label": "DevKit Backend API", "onAutoForward": "silent" },
+		"8545": { "label": "Conflux eSpace RPC", "onAutoForward": "silent" },
+		"8546": { "label": "Conflux eSpace WS", "onAutoForward": "silent" },
+		"8888": { "label": "DEX UI", "onAutoForward": "silent" },
+		"12537": { "label": "Conflux Core RPC", "onAutoForward": "silent" },
+		"12535": { "label": "Conflux Core WS", "onAutoForward": "silent" }
+	}
+}

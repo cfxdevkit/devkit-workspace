@@ -1,0 +1,12 @@
+{
+	"version": 1,
+	"chainId": 1030,
+	"updatedAt": "2026-04-10T08:07:07.018Z",
+	"selectedPoolAddresses": [
+		"0x949b78ef2c8d6979098e195b08f27ff99cb20448",
+		"0x371576f2ce309370a6234593f02953b09cdd2ed2",
+		"0x41e9e50952d8a2e489d0b866b78835bc2ad2a0fa",
+		"0x8bbbd6150c933fcd790b4a00bab23826912c192c",
+		"0x1112a6c61a2eec4bd3aec78bd5bf3396bdd37d57"
+	]
+}

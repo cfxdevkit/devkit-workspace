@@ -1,0 +1,99 @@
+<svg width="1600" height="900" viewBox="0 0 1600 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="900">
+      <stop stop-color="#0F1724"/>
+      <stop offset="1" stop-color="#091018"/>
+    </linearGradient>
+    <linearGradient id="hex" x1="120" y1="160" x2="370" y2="440">
+      <stop stop-color="#4DE8FF"/>
+      <stop offset="1" stop-color="#0098BB"/>
+    </linearGradient>
+    <radialGradient id="glowCyan" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#19D3FF" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#19D3FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowOrange" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#FF7A1A" stop-opacity="0.12"/>
+      <stop offset="1" stop-color="#FF7A1A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1600" height="900" fill="url(#bg)"/>
+
+  <!-- Subtle gridlines -->
+  <g opacity="0.12" stroke="#28405D" stroke-width="1">
+    <line x1="120" y1="90" x2="1480" y2="90"/>
+    <line x1="120" y1="810" x2="1480" y2="810"/>
+    <line x1="120" y1="90" x2="120" y2="810"/>
+    <line x1="1480" y1="90" x2="1480" y2="810"/>
+  </g>
+
+  <!-- Dot grid accents -->
+  <g opacity="0.2">
+    <circle cx="200" cy="160" r="2.5" fill="#28405D"/>
+    <circle cx="300" cy="160" r="2.5" fill="#28405D"/>
+    <circle cx="400" cy="160" r="2.5" fill="#28405D"/>
+    <circle cx="200" cy="740" r="2.5" fill="#28405D"/>
+    <circle cx="1400" cy="160" r="2.5" fill="#28405D"/>
+    <circle cx="1400" cy="740" r="2.5" fill="#28405D"/>
+  </g>
+
+  <!-- Ambient glows -->
+  <circle cx="280" cy="340" r="220" fill="url(#glowCyan)"/>
+  <circle cx="1380" cy="180" r="140" fill="url(#glowOrange)"/>
+
+  <!-- Logo mark — Node Orbit -->
+  <g transform="translate(140 170)">
+    <rect x="0" y="0" width="260" height="260" rx="60" fill="#0D1117" stroke="#1E344E" stroke-width="4"/>
+    <!-- Hex R=63, center (130,125) -->
+    <path d="M130 62L185 93V157L130 188L75 157V93Z"
+          stroke="url(#hex)" stroke-width="10" stroke-linejoin="round" fill="none"/>
+    <!-- > chevron — white -->
+    <path d="M96 108L120 125L96 142"
+          stroke="#FFFFFF" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- _ cursor — cyan -->
+    <path d="M128 142H164"
+          stroke="#00D4FF" stroke-width="8" stroke-linecap="round"/>
+    <circle cx="130" cy="62" r="3" fill="#00D4FF" opacity="0.55"/>
+    <circle cx="191" cy="90" r="6" fill="#FF6B00"/>
+  </g>
+
+  <!-- Title -->
+  <text x="460" y="290" fill="#F5FBFF"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="84" font-weight="700" letter-spacing="-3">Conflux DevKit</text>
+
+  <!-- Tagline -->
+  <text x="462" y="350" fill="#19D3FF"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="26" font-weight="700" letter-spacing="4">ONE COMMAND. FULL CONFLUX.</text>
+
+  <!-- Description -->
+  <text x="462" y="436" fill="#A7BED3"
+        font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+        font-size="30" font-weight="500">Local Conflux node, MCP-native AI workflows,</text>
+  <text x="462" y="476" fill="#A7BED3"
+        font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+        font-size="30" font-weight="500">scaffold templates, persistent chain state,</text>
+  <text x="462" y="516" fill="#A7BED3"
+        font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+        font-size="30" font-weight="500">and a ready-to-run local DEX.</text>
+
+  <!-- Info badges -->
+  <g transform="translate(462 580)">
+    <rect x="0" y="0" width="264" height="52" rx="18" fill="#132033" stroke="#1E344E" stroke-width="2"/>
+    <text x="24" y="33" fill="#F5FBFF"
+          font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+          font-size="18" font-weight="700">Global Hackfest 2026</text>
+    <rect x="284" y="0" width="200" height="52" rx="18" fill="#132033" stroke="#1E344E" stroke-width="2"/>
+    <text x="308" y="33" fill="#F5FBFF"
+          font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+          font-size="18" font-weight="700">Team cfxdevkit</text>
+  </g>
+
+  <!-- Bottom bar -->
+  <text x="140" y="826" fill="#FFB36B"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="16" font-weight="700" letter-spacing="3">REAL NODE  /  RESUMABLE STATE  /  AI TOOLING  /  LOCAL DEX</text>
+</svg>

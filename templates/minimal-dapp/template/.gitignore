@@ -1,0 +1,6 @@
+node_modules/
+dapp/node_modules/
+dapp/dist/
+.devkit/
+.devcontainer/.docker.sock
+.pnpm-store/

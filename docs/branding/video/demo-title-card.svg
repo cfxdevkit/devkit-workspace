@@ -1,0 +1,88 @@
+<svg width="1920" height="1080" viewBox="0 0 1920 1080" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1920" y2="1080">
+      <stop stop-color="#0C1420"/>
+      <stop offset="1" stop-color="#091018"/>
+    </linearGradient>
+    <linearGradient id="hex" x1="180" y1="260" x2="430" y2="540">
+      <stop stop-color="#4DE8FF"/>
+      <stop offset="1" stop-color="#0098BB"/>
+    </linearGradient>
+    <radialGradient id="glowCyan" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#19D3FF" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#19D3FF" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowOrange" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#FF7A1A" stop-opacity="0.1"/>
+      <stop offset="1" stop-color="#FF7A1A" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1920" height="1080" fill="url(#bg)"/>
+
+  <!-- Border frame -->
+  <rect x="72" y="72" width="1776" height="936" rx="36" stroke="#1A2D44" stroke-width="3"/>
+
+  <!-- Ambient glows -->
+  <circle cx="340" cy="440" r="260" fill="url(#glowCyan)"/>
+  <circle cx="1660" cy="200" r="160" fill="url(#glowOrange)"/>
+  <circle cx="300" cy="860" r="120" fill="url(#glowCyan)"/>
+
+  <!-- Dot grid -->
+  <g opacity="0.18">
+    <circle cx="160" cy="160" r="2.5" fill="#28405D"/>
+    <circle cx="280" cy="160" r="2.5" fill="#28405D"/>
+    <circle cx="400" cy="160" r="2.5" fill="#28405D"/>
+    <circle cx="160" cy="920" r="2.5" fill="#28405D"/>
+    <circle cx="1760" cy="160" r="2.5" fill="#28405D"/>
+    <circle cx="1760" cy="920" r="2.5" fill="#28405D"/>
+  </g>
+
+  <!-- Logo mark — Node Orbit -->
+  <g transform="translate(172 268)">
+    <rect x="0" y="0" width="280" height="280" rx="64" fill="#0D1117" stroke="#1E344E" stroke-width="4"/>
+    <!-- Hex R=68, center (140,134) -->
+    <path d="M140 66L199 100V168L140 202L81 168V100Z"
+          stroke="url(#hex)" stroke-width="11" stroke-linejoin="round" fill="none"/>
+    <!-- > chevron — white -->
+    <path d="M104 116L130 134L104 152"
+          stroke="#FFFFFF" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- _ cursor — cyan -->
+    <path d="M138 152H176"
+          stroke="#00D4FF" stroke-width="9" stroke-linecap="round"/>
+    <circle cx="140" cy="66" r="3" fill="#00D4FF" opacity="0.55"/>
+    <circle cx="205" cy="96" r="6" fill="#FF6B00"/>
+  </g>
+
+  <!-- Title -->
+  <text x="520" y="404" fill="#F5FBFF"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="96" font-weight="700" letter-spacing="-4">Conflux DevKit</text>
+
+  <!-- Tagline -->
+  <text x="524" y="476" fill="#19D3FF"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="30" font-weight="700" letter-spacing="4">ONE COMMAND. FULL CONFLUX.</text>
+
+  <!-- Description -->
+  <text x="524" y="572" fill="#A7BED3"
+        font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+        font-size="36" font-weight="500">Local Conflux environment with AI tooling,</text>
+  <text x="524" y="618" fill="#A7BED3"
+        font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+        font-size="36" font-weight="500">persistent chain state, and fast setup.</text>
+
+  <!-- Hackathon label -->
+  <text x="524" y="744" fill="#FFB36B"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="22" font-weight="700" letter-spacing="3">GLOBAL HACKFEST 2026</text>
+
+  <!-- Separator line -->
+  <line x1="524" y1="772" x2="824" y2="772" stroke="#28405D" stroke-width="2"/>
+
+  <!-- Team label -->
+  <text x="524" y="804" fill="#A7BED3"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="18" font-weight="600" letter-spacing="2">TEAM CFXDEVKIT</text>
+</svg>

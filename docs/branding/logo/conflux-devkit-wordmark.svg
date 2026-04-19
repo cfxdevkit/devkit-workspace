@@ -1,0 +1,46 @@
+<svg width="1400" height="340" viewBox="0 0 1400 340" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hex" x1="46" y1="30" x2="154" y2="170">
+      <stop stop-color="#4DE8FF"/>
+      <stop offset="1" stop-color="#0098BB"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1400" height="340" rx="36" fill="#091018"/>
+
+  <!-- Logo mark (compact) — Node Orbit -->
+  <g transform="translate(48 58)">
+    <rect x="0" y="0" width="140" height="140" rx="34" fill="#0D1117" stroke="#1E344E" stroke-width="3"/>
+    <!-- Hex R=34, center (70,67) -->
+    <path d="M70 33L99 50V84L70 101L41 84V50Z"
+          stroke="url(#hex)" stroke-width="5" stroke-linejoin="round" fill="none"/>
+    <!-- > chevron — white -->
+    <path d="M52 58L65 67L52 76"
+          stroke="#FFFFFF" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- _ cursor — cyan -->
+    <path d="M69 76H88"
+          stroke="#00D4FF" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="103" cy="48" r="3" fill="#FF6B00"/>
+  </g>
+
+  <!-- "Conflux" on first line -->
+  <text x="224" y="130" fill="#F5FBFF"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="62" font-weight="700" letter-spacing="-2">Conflux</text>
+
+  <!-- "DevKit" on second line -->
+  <text x="224" y="198" fill="#19D3FF"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="62" font-weight="700" letter-spacing="-2">DevKit</text>
+
+  <!-- Tagline -->
+  <text x="226" y="248" fill="#A7BED3"
+        font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+        font-size="24" font-weight="500">One command. Full Conflux.</text>
+
+  <!-- Feature bar -->
+  <text x="226" y="292" fill="#FFB36B"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="14" font-weight="600" letter-spacing="2">REAL NODE  /  MCP TOOLS  /  RESUMABLE STATE</text>
+</svg>

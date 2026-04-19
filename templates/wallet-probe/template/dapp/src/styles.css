@@ -1,0 +1,164 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-size: 14px;
+  background: #0f1117;
+  color: #e0e0e0;
+  --radius: 10px;
+  --border: rgba(255,255,255,0.08);
+}
+
+body { min-height: 100vh; padding: 24px 16px 64px; }
+
+code {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.88em;
+  background: rgba(255,255,255,0.07);
+  border-radius: 4px;
+  padding: 1px 4px;
+}
+
+/* ── Layout ── */
+.shell { max-width: 1400px; margin: 0 auto; }
+
+.page-header {
+  padding: 20px 0 24px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+.page-header h1 { font-size: 1.6rem; margin-bottom: 6px; }
+.page-header p { color: #999; line-height: 1.5; }
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+/* ── Panel ── */
+.panel {
+  background: #181b24;
+  border: 1px solid var(--border);
+  border-top: 3px solid var(--accent, #4a9eff);
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.panel-hint {
+  font-size: 0.8rem;
+  color: #888;
+  line-height: 1.5;
+  padding: 6px 10px;
+  background: rgba(255,255,255,0.04);
+  border-radius: 6px;
+}
+
+.group-label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #666;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border);
+}
+
+/* ── Key–Value rows ── */
+.kv {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 3px 0;
+  font-size: 0.82rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.kv-label { color: #888; flex-shrink: 0; }
+.kv-val { color: #e0e0e0; text-align: right; word-break: break-all; }
+.kv-val.mono { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+
+/* ── Badges ── */
+.status-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 500;
+  background: rgba(255,255,255,0.08);
+  color: #ccc;
+}
+.badge em { font-style: normal; color: #888; font-size: 0.85em; }
+.badge-ok { background: rgba(34,197,94,0.18); color: #4ade80; }
+.badge-off { background: rgba(239,68,68,0.15); color: #f87171; }
+.badge-pending { background: rgba(234,179,8,0.18); color: #facc15; }
+.badge-idle { background: rgba(148,163,184,0.15); color: #94a3b8; }
+
+/* ── Buttons ── */
+.btn-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+
+.btn {
+  font-size: 0.82rem;
+  font-family: inherit;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.07);
+  color: #e0e0e0;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn:hover:not(:disabled) { background: rgba(255,255,255,0.13); }
+.btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.btn-sm { padding: 4px 10px; font-size: 0.76rem; }
+
+/* ── Error ── */
+.error-box {
+  font-size: 0.78rem;
+  color: #f87171;
+  background: rgba(239,68,68,0.1);
+  border: 1px solid rgba(239,68,68,0.25);
+  border-radius: 6px;
+  padding: 6px 10px;
+  word-break: break-word;
+}
+
+.muted { color: #555; font-style: italic; font-size: 0.82rem; }
+
+/* ── Log box ── */
+.logbox {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  background: #0c0e14;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 8px;
+  max-height: 160px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 4px;
+}
+.logbox.empty { color: #444; text-align: center; padding: 16px 8px; }
+
+.log-line { display: flex; gap: 8px; }
+.log-ts { color: #555; flex-shrink: 0; }
+.log-msg { color: #bbb; word-break: break-all; }
+.log-error .log-msg { color: #f87171; }
+.log-warn .log-msg { color: #facc15; }
+.log-info .log-msg { color: #7dd3fc; }

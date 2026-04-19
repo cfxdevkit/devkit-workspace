@@ -1,0 +1,45 @@
+{
+	"editor.formatOnSave": true,
+	"editor.tabSize": 2,
+
+	"files.exclude": {
+		"**/node_modules": true,
+		"**/dist": true
+	},
+	"files.watcherExclude": {
+		"**/node_modules/**": true,
+		"**/.git/objects/**": true,
+		"**/dist/**": true,
+		"**/.devkit/**": true
+	},
+	"search.exclude": {
+		"**/node_modules": true,
+		"**/dist": true
+	},
+
+	"git.autofetch": true,
+	"git.confirmSync": false,
+	"git.ignoreLimitWarning": true,
+
+	"devkit.scriptDoctor": "doctor",
+	"devkit.scriptInstall": "deps:install",
+	"devkit.scriptContractsDeploy": "deploy",
+	"devkit.scriptClean": "clean",
+	"devkit.scriptDevStart": "dev",
+	"devkit.scriptDevStop": "",
+	"devkit.scriptProdStart": "stack:up",
+	"devkit.scriptProdStop": "stack:down",
+	"devkit.scriptProdRebuild": "stack:rebuild",
+	"devkit.scriptProdStatus": "stack:status",
+	"devkit.scriptProdLogs": "stack:logs",
+	"devkit.devPort": 3001,
+	"devkit.prodPort": 3030,
+	"devkit.packageManager": "pnpm",
+	"devkit.contractsArtifactPath": "",
+
+	"cfxdevkit.autoStart": true,
+	"cfxdevkit.port": 7748,
+	"cfxdevkit.espaceRpc": "http://127.0.0.1:8545",
+	"cfxdevkit.coreRpc": "http://127.0.0.1:12537",
+	"cfxdevkit.dexServerScript": "/usr/local/lib/node_modules/@devkit/devkit-dex-ui/server.mjs"
+}

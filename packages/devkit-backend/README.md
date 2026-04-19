@@ -1,6 +1,6 @@
-# @new-devkit/devkit-backend
+# @devkit/devkit-backend
 
-Minimal backend runtime baked into shared new-devkit images.
+Minimal backend runtime baked into shared devkit images.
 
 Purpose:
 - expose a deterministic health surface for editor targets

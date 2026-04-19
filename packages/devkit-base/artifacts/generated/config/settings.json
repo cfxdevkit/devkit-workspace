@@ -1,5 +1,0 @@
-{
-  "newDevkit.target": "shared-base",
-  "newDevkit.enableBaseUrl": false,
-  "newDevkit.enableProxy": false
-}

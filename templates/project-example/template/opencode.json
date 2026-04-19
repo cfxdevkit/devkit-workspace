@@ -1,0 +1,64 @@
+{
+	"$schema": "https://opencode.ai/config.json",
+
+	"autoupdate": false,
+
+	"watcher": {
+		"ignore": [
+			"**/node_modules/**",
+			"**/__pycache__/**",
+			"**/.git/**",
+			"**/dist/**"
+		]
+	},
+
+	"permission": {
+		"bash": "ask",
+		"edit": "allow",
+		"write": "allow",
+		"webfetch": "allow",
+		"skill": "allow"
+	},
+
+	"instructions": ["README.md"],
+
+	"agent": {
+		"devkit-operator": {
+			"description": "Operate the local Conflux devkit workspace safely from project-example.",
+			"prompt": "Work from the project-example workspace. Prefer backend and MCP workflows over shell-first workflows. Start with conflux_status, then unlock keystore and start node if needed, then confirm local_stack_status before mutating operations."
+		},
+		"contract-deployer": {
+			"description": "Compile, validate, and deploy contracts through prepare-first workflows.",
+			"prompt": "Prefer prepare-first contract workflows. Use bootstrap entry and prepare tools before deployment, and verify constructor arguments explicitly. Treat Core and eSpace as separate deployment targets when addresses or chain-specific arguments are involved."
+		},
+		"dex-operator": {
+			"description": "Operate DEX deployment, seeding, and runtime state from the local stack.",
+			"prompt": "Use DEX MCP tools and backend endpoints before shell commands. Confirm local stack readiness first, then deploy, seed, and inspect runtime state in explicit steps."
+		},
+		"repo-review": {
+			"description": "Review code and runtime behavior without mutating the workspace by default.",
+			"prompt": "Focus on findings, regressions, and operational risk. Prefer read-only inspection and explicit evidence.",
+			"tools": {
+				"edit": false,
+				"write": false,
+				"bash": false
+			}
+		}
+	},
+
+	"mcp": {
+		"devkit": {
+			"type": "local",
+			"command": ["devkit-mcp"],
+			"enabled": true,
+			"timeout": 15000,
+			"environment": {
+				"CFXDEVKIT_AGENT_WORKSPACE": "{env:CFXDEVKIT_AGENT_WORKSPACE}",
+				"CFXDEVKIT_PROJECT_ROOT": "{env:CFXDEVKIT_PROJECT_ROOT}",
+				"CFXDEVKIT_BACKEND_URL": "{env:CFXDEVKIT_BACKEND_URL}",
+				"CFXDEVKIT_COMPOSE_FILE": "{env:CFXDEVKIT_COMPOSE_FILE}",
+				"CFXDEVKIT_RUNTIME_MODE": "{env:CFXDEVKIT_RUNTIME_MODE}"
+			}
+		}
+	}
+}

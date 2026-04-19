@@ -1,0 +1,55 @@
+<svg width="1200" height="400" viewBox="0 0 1200 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="hex" x1="80" y1="60" x2="260" y2="290">
+      <stop stop-color="#4DE8FF"/>
+      <stop offset="1" stop-color="#0098BB"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.5" cy="0.5" r="0.5">
+      <stop stop-color="#19D3FF" stop-opacity="0.08"/>
+      <stop offset="1" stop-color="#19D3FF" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="400" rx="36" fill="#091018"/>
+  <rect x="24" y="24" width="1152" height="352" rx="28" fill="#0F1724" stroke="#1E344E" stroke-width="3"/>
+
+  <!-- Ambient glow -->
+  <circle cx="220" cy="200" r="180" fill="url(#glow)"/>
+
+  <!-- Logo mark — Node Orbit -->
+  <g transform="translate(72 72)">
+    <rect x="0" y="0" width="220" height="220" rx="52" fill="#0D1117" stroke="#1E344E" stroke-width="3"/>
+    <!-- Hex R=53, center (110,106) -->
+    <path d="M110 53L156 79V133L110 159L64 133V79Z"
+          stroke="url(#hex)" stroke-width="8" stroke-linejoin="round" fill="none"/>
+    <!-- > chevron — white -->
+    <path d="M82 92L102 106L82 120"
+          stroke="#FFFFFF" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+    <!-- _ cursor — cyan -->
+    <path d="M108 120H138"
+          stroke="#00D4FF" stroke-width="7" stroke-linecap="round"/>
+    <circle cx="110" cy="53" r="2" fill="#00D4FF" opacity="0.55"/>
+    <circle cx="161" cy="77" r="5" fill="#FF6B00"/>
+  </g>
+
+  <!-- "Conflux" -->
+  <text x="340" y="168" fill="#F5FBFF"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="72" font-weight="700" letter-spacing="-2">Conflux</text>
+
+  <!-- "DevKit" -->
+  <text x="340" y="244" fill="#19D3FF"
+        font-family="JetBrains Mono, IBM Plex Mono, ui-monospace, monospace"
+        font-size="72" font-weight="700" letter-spacing="-2">DevKit</text>
+
+  <!-- Description line 1 -->
+  <text x="342" y="296" fill="#A7BED3"
+        font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+        font-size="22" font-weight="500">Local Conflux stack with AI tooling,</text>
+
+  <!-- Description line 2 -->
+  <text x="342" y="324" fill="#A7BED3"
+        font-family="Inter, Space Grotesk, Segoe UI, sans-serif"
+        font-size="22" font-weight="500">persistent chain state, and zero setup drag.</text>
+</svg>

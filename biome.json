@@ -1,0 +1,35 @@
+{
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"ignoreUnknown": true,
+		"includes": [
+			"**/*.cjs",
+			"**/*.cts",
+			"**/*.js",
+			"**/*.json",
+			"**/*.jsonc",
+			"**/*.jsx",
+			"**/*.mjs",
+			"**/*.mts",
+			"**/*.ts",
+			"**/*.tsx",
+			"!**/node_modules",
+			"!**/dist",
+			"!**/dist-server",
+			"!**/out",
+			"!**/hh-artifacts",
+			"!**/hh-cache",
+			"!opencode.json",
+			"!.opencode",
+			"!.generated",
+			"!generated"
+		]
+	},
+	"linter": {
+		"enabled": true
+	}
+}

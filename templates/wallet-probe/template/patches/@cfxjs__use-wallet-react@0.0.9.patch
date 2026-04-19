@@ -1,0 +1,14 @@
+diff --git a/utils/emitter.js b/utils/emitter.js
+index 28be4a05f291f64bada91ed7f70489dfd781204e..8e67d53d523ffd74ff3571556128b9fc2e05cc15 100644
+--- a/utils/emitter.js
++++ b/utils/emitter.js
+@@ -159,6 +159,9 @@ var Emitter = class {
+       }
+       return accounts;
+     } catch (err) {
++      if (this.state.status === "in-detecting") {
++        this.handleStatusChanged("not-active");
++      }
+       throw err;
+     } finally {
+       this.resolveDetect();

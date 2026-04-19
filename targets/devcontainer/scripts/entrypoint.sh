@@ -1,37 +1,81 @@
 #!/usr/bin/env sh
 set -eu
 
-TARGET_ENV=/opt/new-devkit/targets/devcontainer.env
+# Container entrypoint for Dev Containers / Codespaces.
+#
+# Runs before VS Code Server attaches. Keeps the backend lifecycle tied
+# to the container lifecycle instead of a postStart shell process.
+
+TARGET_ENV=/opt/devkit/targets/devcontainer.env
 if [ -f "$TARGET_ENV" ]; then
 	set -a
 	. "$TARGET_ENV"
 	set +a
 fi
 
+# Fix workspace ownership if bind-mounted from a different user.
+# The workspace path varies: /workspaces/<name> for devcontainers.
+for _ws_candidate in /workspaces/*; do
+	if [ -d "$_ws_candidate" ] && ! [ -w "$_ws_candidate" ]; then
+		echo "[devkit] Fixing workspace ownership for $_ws_candidate ..."
+		sudo chown -R node:node "$_ws_candidate" 2>/dev/null || echo "[devkit] WARNING: Could not fix workspace ownership"
+	fi
+done
+
+for _ws_candidate in /workspaces/*; do
+	if [ -d "$_ws_candidate" ]; then
+		export CFXDEVKIT_WORKSPACE="$_ws_candidate"
+		break
+	fi
+done
+
 if [ -S /var/run/docker.sock ]; then
 	SOCKET_GID=$(stat -c %g /var/run/docker.sock 2>/dev/null || echo '')
-	DOCKER_GID=$(getent group docker 2>/dev/null | cut -d: -f3 || echo '')
-	if [ -n "$SOCKET_GID" ] && [ -n "$DOCKER_GID" ] && [ "$SOCKET_GID" != "$DOCKER_GID" ]; then
-		sudo chgrp docker /var/run/docker.sock 2>/dev/null || true
+	if [ -n "$SOCKET_GID" ]; then
+		# Remap the docker group GID to match the socket so new sessions have group access.
+		sudo groupmod -o -g "$SOCKET_GID" docker 2>/dev/null || true
+		sudo usermod -aG docker node 2>/dev/null || true
+		# Make the socket world-accessible so the current process tree can use it
+		# immediately (group membership changes only take effect on new logins).
+		sudo chmod 666 /var/run/docker.sock 2>/dev/null || true
+		echo "[devkit] Docker socket configured (GID: ${SOCKET_GID})"
 	fi
+	export DOCKER_HOST=${DOCKER_HOST:-unix:///var/run/docker.sock}
+	echo "[devkit] Docker socket available"
 fi
 
-BACKEND_PORT=${NEW_DEVKIT_BACKEND_PORT:-7748}
-LOG_DIR=${HOME}/.new-devkit
+BACKEND_PORT=${DEVKIT_BACKEND_PORT:-7748}
+LOG_DIR=${HOME}/.devkit
 LOG_FILE=${LOG_DIR}/backend.log
 
 mkdir -p "$LOG_DIR"
 
 if ! curl -fsS --max-time 2 "http://127.0.0.1:${BACKEND_PORT}/health" >/dev/null 2>&1; then
+	if ! command -v devkit-backend >/dev/null 2>&1; then
+		echo "[devkit] ERROR: devkit-backend binary not found in PATH"
+		exit 1
+	fi
+
+	cd "${CFXDEVKIT_WORKSPACE:-/workspace}"
 	nohup devkit-backend --host 0.0.0.0 --port "$BACKEND_PORT" --no-open >> "$LOG_FILE" 2>&1 < /dev/null &
 	BACKEND_PID=$!
+	echo "[devkit] Backend starting on :${BACKEND_PORT} (PID: ${BACKEND_PID}, log: ${LOG_FILE})"
+
+	BACKEND_HEALTHY=false
 	for _ in $(seq 1 40); do
 		if curl -fsS --max-time 1 "http://127.0.0.1:${BACKEND_PORT}/health" >/dev/null 2>&1; then
+			echo "[devkit] Backend healthy"
+			BACKEND_HEALTHY=true
 			break
 		fi
 		sleep 0.5
 	done
-	echo "[new-devkit] Backend starting on :${BACKEND_PORT} (PID: ${BACKEND_PID})"
+
+	if [ "$BACKEND_HEALTHY" != true ]; then
+		echo "[devkit] WARNING: backend did not become healthy within 20s - check ${LOG_FILE}"
+	fi
+else
+	echo "[devkit] Backend already healthy on :${BACKEND_PORT}"
 fi
 
 exec "$@"

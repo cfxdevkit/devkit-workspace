@@ -1,0 +1,24 @@
+# Mark generated and vendor files so:
+# 1. GitHub doesn't count them in diffs / language stats
+# 2. VS Code's git change detector skips them (reduces "too many active changes" false-positive)
+
+# pnpm lockfile — treat as binary to avoid noisy diffs
+pnpm-lock.yaml -diff
+
+# Generated contract artifacts
+packages/contracts/typechain-types/** linguist-generated=true
+packages/contracts/generated/**       linguist-generated=true
+dapp/src/generated/**                 linguist-generated=true
+generated/**                          linguist-generated=true
+.generated/**                         linguist-generated=true
+
+# Built extension artefacts
+dist/**                               linguist-generated=true
+packages/*/dist/**                    linguist-generated=true
+apps/*/dist/**                        linguist-generated=true
+
+# Contract ABI snapshots produced by hardhat
+packages/contracts/artifacts/**       linguist-generated=true
+
+# Devkit runtime state
+.devkit/**                            linguist-generated=true

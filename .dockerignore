@@ -1,0 +1,19 @@
+# Dependencies
+**/node_modules/
+
+# Git
+.git/
+.github/
+
+# Build outputs (except artifacts/generated which is needed)
+packages/*/dist/
+packages/*/out/
+dist/
+
+# Generated scaffolds
+.generated/
+
+# Misc
+.DS_Store
+*.md
+!packages/devkit-base/**

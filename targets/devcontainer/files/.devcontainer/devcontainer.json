@@ -1,26 +1,81 @@
 {
-  "name": "{{PROJECT_NAME}}",
-  "pull": "never",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "args": {
-      "DEVKIT_DEVCONTAINER_IMAGE": "new-devkit-devcontainer:dev"
-    }
-  },
-  "updateRemoteUserUID": false,
-  "customizations": {
-    "vscode": {
-      "settings": {
-        "terminal.integrated.defaultProfile.linux": "sh"
-      }
-    }
-  },
-  "postCreateCommand": "pnpm install && pnpm doctor:json",
-  "remoteUser": "node",
-  "mounts": [
-    "source=/var/run/docker.sock,target=/var/run/docker.sock,type=bind"
-  ],
-  "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
-  "init": true,
-  "overrideCommand": false
+	"name": "{{PROJECT_NAME}}",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"DEVKIT_DEVCONTAINER_IMAGE": "ghcr.io/cfxdevkit/devkit-devcontainer:dev"
+		}
+	},
+	"updateRemoteUserUID": false,
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"terminal.integrated.defaultProfile.linux": "sh",
+				"workbench.colorTheme": "Default Dark Modern",
+				"workbench.preferredDarkColorTheme": "Default Dark Modern",
+				"window.autoDetectColorScheme": false,
+				"workbench.startupEditor": "none",
+				"extensions.autoUpdate": false,
+				"extensions.autoCheckUpdates": false,
+				"telemetry.telemetryLevel": "off",
+				"update.mode": "none",
+				"remote.autoForwardPorts": false,
+				"remote.autoForwardPortsSource": "output",
+				"devkit.devPort": 3001
+			},
+			"extensions": [
+				"local.cfxdevkit-workspace-ext",
+				"biomejs.biome",
+				"NomicFoundation.hardhat-solidity"
+			]
+		},
+		"codespaces": {
+			"openFiles": []
+		}
+	},
+	"initializeCommand": ".devcontainer/scripts/detect-docker-socket.sh",
+	"postCreateCommand": "pnpm install && pnpm run --if-present doctor:json && node /opt/devkit/scripts/prefetch-dex-feeds.mjs",
+	"remoteUser": "node",
+	"mounts": [
+		"source=${localWorkspaceFolder}/.devcontainer/.docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	"workspaceMount": "type=bind,source=${localWorkspaceFolder},target=/workspaces/${localWorkspaceFolderBasename},consistency=cached",
+	"workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
+	"init": true,
+	"overrideCommand": false,
+	"forwardPorts": [3001, 3030, 7748, 8545, 8546, 8888, 12537, 12535],
+	"portsAttributes": {
+		"3001": {
+			"label": "Dapp Dev Server",
+			"onAutoForward": "silent"
+		},
+		"3030": {
+			"label": "Dapp Prod Server",
+			"onAutoForward": "silent"
+		},
+		"7748": {
+			"label": "DevKit Backend API",
+			"onAutoForward": "silent"
+		},
+		"8545": {
+			"label": "Conflux eSpace RPC",
+			"onAutoForward": "silent"
+		},
+		"8546": {
+			"label": "Conflux eSpace WS",
+			"onAutoForward": "silent"
+		},
+		"8888": {
+			"label": "DEX UI",
+			"onAutoForward": "silent"
+		},
+		"12537": {
+			"label": "Conflux Core Space RPC",
+			"onAutoForward": "silent"
+		},
+		"12535": {
+			"label": "Conflux Core Space WS",
+			"onAutoForward": "silent"
+		}
+	}
 }

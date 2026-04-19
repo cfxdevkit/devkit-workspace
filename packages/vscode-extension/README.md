@@ -1,6 +1,6 @@
-# new-devkit-workspace-ext
+# devkit-workspace-ext
 
-Minimal shared VS Code extension baked into new-devkit editor images.
+Minimal shared VS Code extension baked into devkit editor images.
 
 Purpose:
 - be available in every generated devcontainer and code-server workspace

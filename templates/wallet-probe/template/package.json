@@ -1,0 +1,30 @@
+{
+	"name": "{{PACKAGE_NAME}}",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"deps:install": "pnpm install",
+		"doctor": "node -e \"console.log('ok')\"",
+		"doctor:json": "echo '{\"ok\":true}'",
+		"clean": "rm -rf node_modules dapp/node_modules dapp/dist",
+		"deploy": "echo 'No contracts in wallet-probe template'",
+		"dev": "pnpm --dir dapp dev",
+		"serve": "pnpm --dir dapp serve",
+		"build": "pnpm --dir dapp serve",
+		"stack:up": "echo 'No docker stack in wallet-probe template'",
+		"stack:down": "echo 'No docker stack in wallet-probe template'",
+		"stack:rebuild": "echo 'No docker stack in wallet-probe template'",
+		"stack:status": "echo 'No docker stack in wallet-probe template'",
+		"stack:logs": "echo 'No docker stack in wallet-probe template'"
+	},
+	"engines": {
+		"node": ">=22",
+		"pnpm": ">=9"
+	},
+	"pnpm": {
+		"patchedDependencies": {
+			"@cfxjs/use-wallet-react@0.0.9": "patches/@cfxjs__use-wallet-react@0.0.9.patch"
+		}
+	}
+}

@@ -1,0 +1,36 @@
+{
+	"name": "@devkit/mcp",
+	"version": "0.0.0",
+	"private": true,
+	"description": "MCP server for DevKit — Conflux blockchain development tools for AI agents",
+	"type": "module",
+	"bin": {
+		"devkit-mcp": "./dist/index.js"
+	},
+	"main": "./dist/server.js",
+	"types": "./dist/server.d.ts",
+	"exports": {
+		".": "./dist/server.js",
+		"./cli": "./dist/index.js"
+	},
+	"files": [
+		"dist"
+	],
+	"scripts": {
+		"build": "tsc -p ./ && chmod +x dist/index.js",
+		"typecheck": "tsc -p ./ --noEmit",
+		"watch": "tsc -watch -p ./"
+	},
+	"dependencies": {
+		"@devkit/shared": "workspace:*",
+		"@cfxdevkit/compiler": "^1.2.4",
+		"@cfxdevkit/core": "^1.2.4",
+		"@modelcontextprotocol/sdk": "^1.0.0",
+		"zod": "^3.23.0"
+	},
+	"devDependencies": {
+		"@types/node": "^20.0.0",
+		"typescript": "^5.3.0"
+	},
+	"license": "Apache-2.0"
+}

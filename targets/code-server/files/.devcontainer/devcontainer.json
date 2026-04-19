@@ -1,15 +1,74 @@
 {
-  "name": "{{PROJECT_NAME}}",
-  "pull": "never",
-  "build": {
-    "dockerfile": "Dockerfile",
-    "args": {
-      "DEVKIT_CODE_SERVER_IMAGE": "new-devkit-code-server:dev"
-    }
-  },
-  "updateRemoteUserUID": false,
-  "remoteUser": "node",
-  "workspaceFolder": "/workspace",
-  "init": true,
-  "overrideCommand": false
+	"name": "{{PROJECT_NAME}}",
+	"build": {
+		"dockerfile": "Dockerfile",
+		"args": {
+			"DEVKIT_CODE_SERVER_IMAGE": "ghcr.io/cfxdevkit/devkit-code-server:dev"
+		}
+	},
+	"updateRemoteUserUID": false,
+	"customizations": {
+		"vscode": {
+			"settings": {
+				"workbench.colorTheme": "Default Dark Modern",
+				"workbench.preferredDarkColorTheme": "Default Dark Modern",
+				"window.autoDetectColorScheme": false,
+				"workbench.startupEditor": "none",
+				"extensions.autoUpdate": false,
+				"extensions.autoCheckUpdates": false,
+				"telemetry.telemetryLevel": "off",
+				"update.mode": "none",
+				"devkit.devPort": 3001
+			}
+		}
+	},
+	"initializeCommand": ".devcontainer/scripts/detect-docker-socket.sh",
+	"postCreateCommand": "pnpm install && pnpm run --if-present doctor:json && node /opt/devkit/scripts/prefetch-dex-feeds.mjs",
+	"remoteUser": "node",
+	"mounts": [
+		"source=${localWorkspaceFolder}/.devcontainer/.docker.sock,target=/var/run/docker.sock,type=bind"
+	],
+	"workspaceMount": "type=bind,source=${localWorkspaceFolder},target=/workspace,consistency=cached",
+	"workspaceFolder": "/workspace",
+	"init": true,
+	"overrideCommand": false,
+	"forwardPorts": [3001, 3030, 7748, 8080, 8545, 8546, 8888, 12537, 12535],
+	"portsAttributes": {
+		"3001": {
+			"label": "Dapp Dev Server",
+			"onAutoForward": "silent"
+		},
+		"3030": {
+			"label": "DEX UI",
+			"onAutoForward": "silent"
+		},
+		"7748": {
+			"label": "DevKit Backend API",
+			"onAutoForward": "silent"
+		},
+		"8080": {
+			"label": "code-server",
+			"onAutoForward": "silent"
+		},
+		"8545": {
+			"label": "Conflux eSpace RPC",
+			"onAutoForward": "silent"
+		},
+		"8546": {
+			"label": "Conflux eSpace WS",
+			"onAutoForward": "silent"
+		},
+		"8888": {
+			"label": "Conflux Dev Dashboard",
+			"onAutoForward": "silent"
+		},
+		"12537": {
+			"label": "Conflux Core Space RPC",
+			"onAutoForward": "silent"
+		},
+		"12535": {
+			"label": "Conflux Core Space WS",
+			"onAutoForward": "silent"
+		}
+	}
 }
