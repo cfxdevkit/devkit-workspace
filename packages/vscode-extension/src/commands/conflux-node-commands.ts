@@ -99,7 +99,7 @@ export function registerNodeLifecycleCommands(params: {
 					userMsg = "Cannot connect to devkit server. Is it running?";
 				else if (errMsg.includes("timeout"))
 					userMsg = "Node start timed out. The node may still be initializing.";
-				else if (errMsg.length > 120) userMsg = errMsg.slice(0, 120) + "…";
+				else if (errMsg.length > 120) userMsg = `${errMsg.slice(0, 120)}…`;
 				const action = await vscode.window.showErrorMessage(
 					`Failed to start node: ${userMsg}`,
 					"Wipe & Restart",

@@ -103,7 +103,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	const { address, isConnected, chainId } = useAccount();
 	const { signMessageAsync } = useSignMessage();
 	const siweEnabled = isSiweEnabled();
-	const authApiAvailable = siweEnabled;
 
 	const [isAuthenticated, setIsAuthenticated] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);

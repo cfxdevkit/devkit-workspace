@@ -29,7 +29,12 @@ const copyTargets = [
 	},
 ];
 
-const excludedDirectories = new Set(["node_modules", "dist", ".turbo", ".next"]);
+const excludedDirectories = new Set([
+	"node_modules",
+	"dist",
+	".turbo",
+	".next",
+]);
 
 rmSync(assetsRoot, { recursive: true, force: true });
 

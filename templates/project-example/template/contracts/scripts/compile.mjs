@@ -16,9 +16,24 @@ const artifact = `export const exampleCounterArtifact = ${JSON.stringify(
 				type: "event",
 				anonymous: false,
 				inputs: [
-					{ name: "account", type: "address", internalType: "address", indexed: true },
-					{ name: "amount", type: "uint256", internalType: "uint256", indexed: false },
-					{ name: "unlockTimestamp", type: "uint64", internalType: "uint64", indexed: false },
+					{
+						name: "account",
+						type: "address",
+						internalType: "address",
+						indexed: true,
+					},
+					{
+						name: "amount",
+						type: "uint256",
+						internalType: "uint256",
+						indexed: false,
+					},
+					{
+						name: "unlockTimestamp",
+						type: "uint64",
+						internalType: "uint64",
+						indexed: false,
+					},
 				],
 				name: "FundsLocked",
 			},
@@ -26,15 +41,32 @@ const artifact = `export const exampleCounterArtifact = ${JSON.stringify(
 				type: "event",
 				anonymous: false,
 				inputs: [
-					{ name: "account", type: "address", internalType: "address", indexed: true },
-					{ name: "amount", type: "uint256", internalType: "uint256", indexed: false },
+					{
+						name: "account",
+						type: "address",
+						internalType: "address",
+						indexed: true,
+					},
+					{
+						name: "amount",
+						type: "uint256",
+						internalType: "uint256",
+						indexed: false,
+					},
 				],
 				name: "FundsWithdrawn",
 			},
 			{
 				type: "event",
 				anonymous: false,
-				inputs: [{ name: "value", type: "uint256", internalType: "uint256", indexed: false }],
+				inputs: [
+					{
+						name: "value",
+						type: "uint256",
+						internalType: "uint256",
+						indexed: false,
+					},
+				],
 				name: "ValueChanged",
 			},
 			{
@@ -57,7 +89,9 @@ const artifact = `export const exampleCounterArtifact = ${JSON.stringify(
 			},
 			{
 				type: "function",
-				inputs: [{ name: "unlockTimestamp", internalType: "uint64", type: "uint64" }],
+				inputs: [
+					{ name: "unlockTimestamp", internalType: "uint64", type: "uint64" },
+				],
 				name: "lock",
 				outputs: [],
 				stateMutability: "payable",

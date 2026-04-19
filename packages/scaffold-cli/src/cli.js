@@ -55,7 +55,9 @@ function printUsage() {
 	console.log("Usage: scaffold-cli <command> [options]");
 	console.log("");
 	console.log("Commands:");
-	console.log("  new <destination>                                    Interactive mode");
+	console.log(
+		"  new <destination>                                    Interactive mode",
+	);
 	console.log(
 		"  new <destination> --template <name> [--target <name>] [--json]",
 	);

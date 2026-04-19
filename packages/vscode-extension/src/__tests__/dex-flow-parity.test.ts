@@ -47,7 +47,9 @@ describe("DEX backend routes → extension parity", () => {
 		method,
 		path,
 	}) => {
-		expect(dexRoutes.includes(`router.${method}('${path}'`)).toBe(true);
+		expect(
+			new RegExp(`router\\.${method}\\(\\s*["']${path}["']`).test(dexRoutes),
+		).toBe(true);
 	});
 
 	it.each(EXTENSION_API_CALLS)("extension api.ts calls $route via $fn", ({
@@ -55,10 +57,10 @@ describe("DEX backend routes → extension parity", () => {
 		route,
 	}) => {
 		expect(extApi.includes(fn)).toBe(true);
-		expect(extApi.includes(`'${route}'`)).toBe(true);
+		expect(new RegExp(`["']${route}["']`).test(extApi)).toBe(true);
 	});
 
 	it("extension registers cfxdevkit.deployDex command", () => {
-		expect(extSource.includes("'cfxdevkit.deployDex'")).toBe(true);
+		expect(/["']cfxdevkit\.deployDex["']/.test(extSource)).toBe(true);
 	});
 });

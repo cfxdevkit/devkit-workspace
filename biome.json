@@ -23,6 +23,8 @@
 			"!**/out",
 			"!**/hh-artifacts",
 			"!**/hh-cache",
+			"!packages/contracts/artifacts",
+			"!packages/contracts/generated",
 			"!opencode.json",
 			"!.opencode",
 			"!.generated",

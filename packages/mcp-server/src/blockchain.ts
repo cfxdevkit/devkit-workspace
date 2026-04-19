@@ -465,7 +465,7 @@ export const blockchainToolDefinitions = [
 		name: "blockchain_espace_erc20_transfer",
 		description:
 			"Transfer ERC-20 tokens to a recipient on eSpace. " +
-			"Handles decimals automatically — amount is in human-readable units (e.g. \"100\" for 100 tokens). " +
+			'Handles decimals automatically — amount is in human-readable units (e.g. "100" for 100 tokens). ' +
 			"Reads token decimals, scales the amount, and calls transfer(). " +
 			"Specify the sender by accountIndex (default: 0) or explicit privateKey.",
 		inputSchema: {
@@ -729,7 +729,8 @@ export const blockchainToolDefinitions = [
 			properties: {
 				address: {
 					type: "string",
-					description: "Core contract address — MUST be base32 format (net2029:… / cfxtest:… / cfx:…). NOT 0x.",
+					description:
+						"Core contract address — MUST be base32 format (net2029:… / cfxtest:… / cfx:…). NOT 0x.",
 				},
 				abi: { type: "string", description: "Contract ABI as JSON string" },
 				functionName: {
@@ -739,7 +740,7 @@ export const blockchainToolDefinitions = [
 				args: {
 					type: "string",
 					description:
-						'Flat JSON array in parameter order. Address args MUST be Core base32 (net2029:…), NOT 0x. ' +
+						"Flat JSON array in parameter order. Address args MUST be Core base32 (net2029:…), NOT 0x. " +
 						'Example: ["net2029:aam…","1000000000000000000"]. uint256 → decimal string. Never double-nest.',
 				},
 				rpcUrl: { type: "string" },
@@ -759,7 +760,8 @@ export const blockchainToolDefinitions = [
 			properties: {
 				tokenAddress: {
 					type: "string",
-					description: "Token contract address — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
+					description:
+						"Token contract address — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
 				},
 				holderAddress: {
 					type: "string",
@@ -816,13 +818,17 @@ export const blockchainToolDefinitions = [
 			type: "object",
 			required: ["address", "abi", "functionName"],
 			properties: {
-				address: { type: "string", description: "Core contract address — MUST be base32 (net2029:… / cfxtest:… / cfx:…)" },
+				address: {
+					type: "string",
+					description:
+						"Core contract address — MUST be base32 (net2029:… / cfxtest:… / cfx:…)",
+				},
 				abi: { type: "string", description: "Contract ABI as JSON string" },
 				functionName: { type: "string", description: "Function name to call" },
 				args: {
 					type: "string",
 					description:
-						'Flat JSON array in parameter order. Address args MUST be Core base32 (net2029:…), NOT 0x. ' +
+						"Flat JSON array in parameter order. Address args MUST be Core base32 (net2029:…), NOT 0x. " +
 						'Example: ["net2029:aam…","1000000000000000000"]. uint256 → decimal string. Never double-nest.',
 				},
 				value: {
@@ -847,7 +853,7 @@ export const blockchainToolDefinitions = [
 		name: "blockchain_core_erc20_transfer",
 		description:
 			"Transfer ERC-20 (CRC-20) tokens to a recipient on Core Space. " +
-			"Handles decimals automatically — amount is in human-readable units (e.g. \"100\" for 100 tokens). " +
+			'Handles decimals automatically — amount is in human-readable units (e.g. "100" for 100 tokens). ' +
 			"IMPORTANT: All addresses MUST be Core base32 format (net2029:… / cfxtest:… / cfx:…), NOT 0x. " +
 			"Specify the sender by accountIndex (default: 0) or explicit privateKey.",
 		inputSchema: {
@@ -856,11 +862,13 @@ export const blockchainToolDefinitions = [
 			properties: {
 				tokenAddress: {
 					type: "string",
-					description: "Token contract address — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
+					description:
+						"Token contract address — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
 				},
 				to: {
 					type: "string",
-					description: "Recipient — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
+					description:
+						"Recipient — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
 				},
 				amount: {
 					type: "string",
@@ -894,11 +902,13 @@ export const blockchainToolDefinitions = [
 			properties: {
 				tokenAddress: {
 					type: "string",
-					description: "Token contract address — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
+					description:
+						"Token contract address — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
 				},
 				spender: {
 					type: "string",
-					description: "Address to approve as spender — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
+					description:
+						"Address to approve as spender — MUST be Core base32 (net2029:… / cfxtest:… / cfx:…)",
 				},
 				amount: {
 					type: "string",
@@ -1602,7 +1612,9 @@ export async function blockchainToolHandler(
 				abi: ERC20_ABI,
 				functionName: "symbol",
 			})) as string;
-			const MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			const MAX_UINT256 = BigInt(
+				"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			);
 			const rawAmount =
 				(a.amount as string).toLowerCase() === "unlimited"
 					? MAX_UINT256
@@ -1615,9 +1627,7 @@ export async function blockchainToolHandler(
 			);
 			const receipt = await wallet.waitForTransaction(hash);
 			const displayAmount =
-				rawAmount === MAX_UINT256
-					? "unlimited"
-					: `${a.amount} ${symbol}`;
+				rawAmount === MAX_UINT256 ? "unlimited" : `${a.amount} ${symbol}`;
 			return {
 				text: [
 					`Approved:     ${displayAmount}`,
@@ -2024,7 +2034,9 @@ export async function blockchainToolHandler(
 				abi: ERC20_ABI,
 				functionName: "symbol",
 			})) as string;
-			const MAX_UINT256 = BigInt("0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff");
+			const MAX_UINT256 = BigInt(
+				"0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff",
+			);
 			const rawAmount =
 				(a.amount as string).toLowerCase() === "unlimited"
 					? MAX_UINT256
@@ -2037,9 +2049,7 @@ export async function blockchainToolHandler(
 			);
 			const receipt = await wallet.waitForTransaction(hash);
 			const displayAmount =
-				rawAmount === MAX_UINT256
-					? "unlimited"
-					: `${a.amount} ${symbol}`;
+				rawAmount === MAX_UINT256 ? "unlimited" : `${a.amount} ${symbol}`;
 			return {
 				text: [
 					`Approved:     ${displayAmount}`,

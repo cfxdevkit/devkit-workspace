@@ -193,7 +193,11 @@ function ensureEmptyDestination(destinationPath) {
 	}
 }
 
-function copyDirectoryContents(sourcePath, destinationPath, excludes = new Set()) {
+function copyDirectoryContents(
+	sourcePath,
+	destinationPath,
+	excludes = new Set(),
+) {
 	mkdirSync(destinationPath, { recursive: true });
 	for (const entryName of readdirSync(sourcePath)) {
 		if (excludes.has(entryName)) {
@@ -293,7 +297,9 @@ function materializeUiShared(destinationPath) {
 		copyExcludes,
 	);
 
-	const sourcePackage = readJson(resolve(assetRoots.uiSharedRoot, "package.json"));
+	const sourcePackage = readJson(
+		resolve(assetRoots.uiSharedRoot, "package.json"),
+	);
 	const destinationPackage = readJson(
 		resolve(destinationPath, "ui-shared", "package.json"),
 	);

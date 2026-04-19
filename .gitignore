@@ -22,6 +22,10 @@ dist/*.vsix
 # Cache
 packages/mcp-server/.feeds/
 packages/contracts/typechain-types/
+packages/contracts/artifacts/
+packages/contracts/generated/
+packages/contracts/hh-artifacts/
+packages/contracts/hh-cache/
 .pnpm-store/
 .pnpm-store
 

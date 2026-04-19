@@ -78,19 +78,6 @@ function buildBootstrapArgs(params: {
 	return { resolvedArgs, missingArgs, extraArgs };
 }
 
-async function getDefaultEvmAddress(
-	client: DevkitClient,
-	config: DevkitConfig,
-	accountIndex: number,
-): Promise<string> {
-	try {
-		const accounts = (await client.getAccounts(config)) as AccountInfo[];
-		return accounts[accountIndex]?.evmAddress ?? accounts[0]?.evmAddress ?? "";
-	} catch {
-		return "";
-	}
-}
-
 /**
  * Returns the correct default address for the target chain.
  * Core Space uses base32 addresses (net2029:…), eSpace uses 0x addresses.
@@ -106,8 +93,8 @@ async function getDefaultAddressForChain(
 		const account = accounts[accountIndex] ?? accounts[0];
 		if (!account) return "";
 		return chain === "core"
-			? account.coreAddress ?? ""
-			: account.evmAddress ?? "";
+			? (account.coreAddress ?? "")
+			: (account.evmAddress ?? "");
 	} catch {
 		return "";
 	}
@@ -173,7 +160,7 @@ function inferTemplateArgDefault(
 	if (t === "bool") return false;
 
 	// bytes / bytes32 → zero bytes
-	if (t === "bytes32") return "0x" + "0".repeat(64);
+	if (t === "bytes32") return `0x${"0".repeat(64)}`;
 	if (t === "bytes") return "0x";
 
 	return undefined;

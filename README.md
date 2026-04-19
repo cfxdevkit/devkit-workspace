@@ -129,6 +129,7 @@ At that point, tokenization or other token-based utility mechanisms may be intro
 
 The project's relationship with Conflux grants is currently focused on **technical validation and promotion rather than funding**:
 
+- Published grant proposal: https://forum.conflux.fun/t/integration-grants-application-26-conflux-devkit/23572
 - Request ecosystem recognition and listing as an official developer tool
 - Seek technical review and validation from the Conflux core team
 - Gain visibility through official channels (docs, social media, developer events)
@@ -228,30 +229,27 @@ This persistent state is valuable for debugging, reproducing issues, and validat
 
 ## 🏗️ Architecture
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│  Editor / IDE (any devcontainer-capable host)                       │
-│  ┌───────────────────┐   MCP   ┌──────────────────────────────────┐ │
-│  │  AI Agent         │◄───────►│  devkit-mcp  (MCP Server)       │ │
-│  │  (Copilot/Claude) │         │  30+ tools: conflux_*, dex_*,   │ │
-│  └───────────────────┘         │  blockchain_*, workspace_*       │ │
-│  ┌───────────────────┐         └──────────┬───────────────────────┘ │
-│  │ DevKit Editor     │                    │ HTTP                    │
-│  │ Extension         │◄───────────────────┤                         │
-│  └───────────────────┘                   ▼                         │
-│                              ┌───────────────────────┐             │
-│  Devcontainer / Docker ──────►  devkit-backend :7748  │             │
-│                              │  REST API, process mgr │             │
-│                              └──────────┬────────────┘             │
-│                                         │                           │
-│                    ┌────────────────────┼────────────────────┐      │
-│                    ▼                    ▼                    ▼      │
-│          ┌──────────────┐   ┌───────────────────┐  ┌──────────────┐│
-│          │ Conflux Node │   │ Local DEX (Uni V2)│  │ DEX UI :8888 ││
-│          │ eSpace :8545 │   │ 15 seeded pairs   │  │  React app   ││
-│          │ Core  :12537 │   └───────────────────┘  └──────────────┘│
-│          └──────────────┘                                          │
-└─────────────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TB
+	subgraph Host[Editor / IDE on any devcontainer-capable host]
+		AI[AI Agent<br/>Copilot / Claude]
+		EXT[DevKit Editor Extension]
+		MCP[devkit-mcp<br/>30+ MCP tools]
+		BACKEND[devkit-backend :7748<br/>REST API and process manager]
+	end
+
+	subgraph Runtime[Devcontainer / Docker runtime]
+		NODE[Conflux Node<br/>eSpace :8545<br/>Core :12537]
+		DEX[Local DEX<br/>Uniswap V2-compatible<br/>15 seeded pairs]
+		UI[DEX UI :8888<br/>React app]
+	end
+
+	AI <-- MCP --> BACKEND
+	EXT --> BACKEND
+	BACKEND --> NODE
+	BACKEND --> DEX
+	BACKEND --> UI
+	DEX --> UI
 ```
 
 ---
@@ -333,15 +331,15 @@ pnpm --filter contracts test
 2. Wait for DevKit auto-start (status bar shows "DevKit ✓")
 3. Use any MCP-compatible AI agent and ask: "check devkit status"
 4. The AI calls `conflux_status` → follow `nextStep` instructions
-5. Deploy your first contract: "deploy the example counter contract"
+5. Deploy your first contract: "deploy the SimpleStorage contract"
 
 ### Example Workflows
 
 #### Deploy and interact with a contract (via AI)
 
 ```
-1. Ask your AI agent: "deploy the ExampleCounter contract to eSpace"
-2. Agent calls: conflux_bootstrap_entry → conflux_bootstrap_prepare → conflux_bootstrap_deploy
+1. Ask your AI agent: "deploy the SimpleStorage contract"
+2. Agent calls: conflux_status → conflux_deploy(name="SimpleStorage")
 3. Ask: "call increment on the deployed counter"
 4. Agent calls: blockchain_espace_call_contract with the ABI
 ```
@@ -407,7 +405,7 @@ Included submission assets at repo root:
 ## 🔒 Security
 
 - Smart contract interactions go through typed ABI calls only — no raw calldata injection
-- Keystore encryption: the DevKit supports encrypted keystores; when running the stack you can initialize the keystore with a passphrase via the MCP tool `conflux_keystore_setup` (or `setupKeystore` in the Devkit client). The passphrase is required to unlock the keystore (`conflux_keystore_unlock`) and is not exported.
+- Keystore encryption: the DevKit supports encrypted keystores; initialize first-time local setup via `conflux_setup_init`, then unlock with `conflux_keystore_unlock`. The passphrase is required to unlock the keystore and is not exported.
 - MCP tools enforce input validation at the HTTP boundary
 - All example contracts use OpenZeppelin standards
 

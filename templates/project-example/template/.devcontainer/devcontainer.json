@@ -38,10 +38,7 @@
 				"cfxdevkit.coreRpc": "http://127.0.0.1:12537",
 				"cfxdevkit.dexServerScript": "/usr/local/lib/node_modules/@devkit/devkit-dex-ui/server.mjs"
 			},
-			"extensions": [
-				"biomejs.biome",
-				"NomicFoundation.hardhat-solidity"
-			]
+			"extensions": ["biomejs.biome", "NomicFoundation.hardhat-solidity"]
 		}
 	},
 	"initializeCommand": ".devcontainer/scripts/detect-docker-socket.sh",

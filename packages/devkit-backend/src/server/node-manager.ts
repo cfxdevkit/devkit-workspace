@@ -14,9 +14,9 @@ import type { ServerConfig } from "@cfxdevkit/devnode";
 import { ServerManager } from "@cfxdevkit/devnode";
 import { getKeystoreService } from "@cfxdevkit/services";
 import { contractStorage } from "./contract-storage.js";
-import { clearDexRuntimeState } from "./routes/dex-runtime.js";
 import { ConflictError, ServiceUnavailableError } from "./errors.js";
 import { log } from "./logger.js";
+import { clearDexRuntimeState } from "./routes/dex-runtime.js";
 
 /** Default local-devnet configuration */
 function resolveDefaultAccountsCount(): number {

@@ -10,7 +10,7 @@ This file is the single source of truth for all submission URLs.
 | Resource | URL |
 |----------|-----|
 | GitHub Repository (public) | `https://github.com/cfxdevkit/devkit-workspace` |
-| Hackathon fork (`/projects/`) | To be added after creating the hackathon fork and `projects/devkit-workspace/` folder |
+| Hackathon fork (`/projects/`) | https://github.com/cfxdevkit/global-hackfest-2026/tree/main/projects/devkit-workspace |
 | Hackathon Submission PR | To be added after opening the submission PR |
 | Live Codespaces | https://codespaces.new/cfxdevkit/devkit-workspace-example |
 | Hosted Example dApp | https://devkit-workspace-example-dapp-3yrm.vercel.app/ |
@@ -24,8 +24,8 @@ This file is the single source of truth for all submission URLs.
 | Resource | URL |
 |----------|-----|
 | Demo Video (YouTube/Vimeo) | https://youtu.be/HQ7EJWGkwzQ |
-| Demo Video (direct file in /projects/) | N/A — using hosted YouTube link |
-| Participant Intro Video | To be added before final submission |
+| Demo Video (direct file in /projects/) | `projects/devkit-workspace/demo/demo-video.mp4` |
+| Participant Intro Video | https://drive.google.com/file/d/174N88m3e8ipwEEkMyCZgkU2ryJnQtnip |
 
 ---
 
@@ -41,9 +41,9 @@ This file is the single source of truth for all submission URLs.
 
 | Resource | URL |
 |----------|-----|
-| Electric Capital PR | To be added before final submission |
-| Social Media Post (Twitter/X) | To be added before final submission; must tag @ConfluxDevs and @ConfluxNetwork |
-| Grant Proposal (Conflux Forum) | Optional — add forum URL if submitted |
+| Electric Capital PR | https://github.com/electric-capital/open-dev-data/pull/2835 |
+| Social Media Post (Twitter/X) | https://x.com/CFXDevkit/status/2045835306511876268?s=20 |
+| Grant Proposal (Conflux Forum) | https://forum.conflux.fun/t/integration-grants-application-26-conflux-devkit/23572 |
 | Pitch Deck (Google Slides) | Optional — use `presentation.pdf` or add hosted slides URL |
 
 ---
@@ -65,12 +65,12 @@ Once all links above are filled in, use this template for the hackathon PR:
 
 ## Links and Resources
 - **GitHub Repository**: https://github.com/cfxdevkit/devkit-workspace
-- **Projects Folder**: [pending after hackathon fork is created at /projects/devkit-workspace/]
-- **Live Codespaces**: https://codespaces.new/cfxdevkit/devkit-workspace-example
-- **Hosted Example dApp**: https://devkit-workspace-example-dapp-3yrm.vercel.app/
-- **Demo Video**: https://youtu.be/HQ7EJWGkwzQ
-- **Grant Proposal**: N/A or [forum link]
+- **Projects Folder**: https://github.com/cfxdevkit/global-hackfest-2026/tree/main/projects/devkit-workspace
+- **Live Demo**: https://devkit-workspace-example-dapp-3yrm.vercel.app/
+- **Demo Video**: https://youtu.be/HQ7EJWGkwzQ (file also included at `projects/devkit-workspace/demo/demo-video.mp4`)
+- **Grant Proposal**: https://forum.conflux.fun/t/integration-grants-application-26-conflux-devkit/23572
 - **Pitch Deck**: See `presentation.pdf` in `/projects/devkit-workspace/`
+- **Project Website**: https://cfxdevkit.org
 
 ## Technical Details
 - **Conflux Network**: eSpace (local devnet + testnet chainId 71)
@@ -83,10 +83,13 @@ Once all links above are filled in, use this template for the hackathon PR:
 - [x] AI + Blockchain Integration
 
 ## Electric Capital PR
-- [add PR URL]
+- https://github.com/electric-capital/open-dev-data/pull/2835
 
 ## Social Media Post
-- [add post URL]
+- https://x.com/CFXDevkit/status/2045835306511876268?s=20
+
+## Grant Proposal
+- https://forum.conflux.fun/t/integration-grants-application-26-conflux-devkit/23572
 ```
 
 ---

@@ -1418,7 +1418,7 @@ export function createDevkitMcpServer(): Server {
 							type: "array",
 							description:
 								"Constructor arguments (optional — sensible defaults are auto-filled when omitted). " +
-								"Examples: SimpleStorage→[0], TestToken→[\"MyToken\",\"MTK\",1000000], Counter→[] (no args)",
+								'Examples: SimpleStorage→[0], TestToken→["MyToken","MTK",1000000], Counter→[] (no args)',
 							items: {},
 						},
 						chain: {
@@ -1781,8 +1781,7 @@ export function createDevkitMcpServer(): Server {
 						chains: {
 							type: "array",
 							items: { type: "string", enum: ["evm", "core"] },
-							description:
-								'Target chains in order (e.g. ["evm","core"])',
+							description: 'Target chains in order (e.g. ["evm","core"])',
 						},
 						args: {
 							type: "array",

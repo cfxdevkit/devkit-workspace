@@ -20,23 +20,25 @@ This repository root now contains the submission-facing files directly:
 ## Completed
 
 - Root README is public-facing and submission-ready
+- Root `pnpm build` succeeds in the current repository state
 - Demo video is uploaded: `https://youtu.be/HQ7EJWGkwzQ`
 - Screenshot pack is included under `demo/screenshots/`
 - Pitch deck PDF is present at `presentation.pdf`
 - ExampleCounter testnet deployment is documented
 - Live demo URL is documented
 - License file is present
+- Electric Capital PR is published and linked in `links.md`
+- Social post is published and linked in `links.md`
+- Grant proposal is published and linked in `links.md`
+- Participant intro video is uploaded and linked in `links.md`
 
 ---
 
 ## Remaining Before Final Submission
 
 - Confirm the GitHub repository is public
-- Re-run `pnpm install && pnpm build` from a clean clone and record the result
+- Optionally re-run `pnpm install && pnpm build` from a fresh clone and record the result
 - Verify the demo video still satisfies the 3–5 minute requirement
-- Record and upload the participant intro video
-- Create the Electric Capital PR and add its URL to `links.md`
-- Publish the social post and add its URL to `links.md`
 - Create the hackathon fork and submission PR
 
 ---
@@ -49,12 +51,14 @@ This repository root now contains the submission-facing files directly:
 | Public README | ✅ | `README.md` | Done |
 | License file | ✅ | `LICENSE` | Done |
 | Links tracker | ✅ | `links.md` | Done |
+| Root build command | ✅ | `package.json` | Done |
 | Demo video link | ✅ | `README.md`, `links.md` | Done |
-| Participant intro video | ✅ | `links.md` | Missing |
+| Participant intro video | ✅ | `links.md` | Done |
 | Screenshot pack | ✓ optional | `demo/screenshots/` | Done |
 | Pitch deck PDF | ✓ optional | `presentation.pdf` | Done |
-| Electric Capital PR | ✅ | `links.md` | Missing |
-| Social post | ✅ | `links.md` | Missing |
+| Electric Capital PR | ✅ | `links.md` | Done |
+| Social post | ✅ | `links.md` | Done |
+| Grant proposal | ✓ optional | `links.md` | Done |
 | Deployed contract info | ✅ | `README.md` | Done |
 | Hackathon submission PR | ✅ | `links.md` | Missing |
 

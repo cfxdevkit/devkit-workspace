@@ -50,13 +50,17 @@ export const PUBLIC_ESPACE_CHAINS = [
 	confluxMainnetESpace,
 ] as const;
 
-export function resolveRuntimeDefaultChainId(projectDefaultChainId: number): number {
+export function resolveRuntimeDefaultChainId(
+	projectDefaultChainId: number,
+): number {
 	if (!isHostedRuntime() || projectDefaultChainId !== confluxLocalESpace.id) {
 		return projectDefaultChainId;
 	}
 
 	for (const chain of PUBLIC_ESPACE_CHAINS) {
-		if (Object.keys(CONTRACT_ADDRESSES_BY_CHAIN_ID[chain.id] ?? {}).length > 0) {
+		if (
+			Object.keys(CONTRACT_ADDRESSES_BY_CHAIN_ID[chain.id] ?? {}).length > 0
+		) {
 			return chain.id;
 		}
 	}
@@ -65,12 +69,15 @@ export function resolveRuntimeDefaultChainId(projectDefaultChainId: number): num
 }
 
 export function getRuntimeEspaceChains(projectDefaultChainId: number) {
-	const runtimeDefaultChainId = resolveRuntimeDefaultChainId(projectDefaultChainId);
+	const runtimeDefaultChainId = resolveRuntimeDefaultChainId(
+		projectDefaultChainId,
+	);
 	const baseChains = isHostedRuntime()
 		? [...PUBLIC_ESPACE_CHAINS]
 		: [...SUPPORTED_CHAINS];
 	const preferredChain =
-		baseChains.find((chain) => chain.id === runtimeDefaultChainId) ?? baseChains[0];
+		baseChains.find((chain) => chain.id === runtimeDefaultChainId) ??
+		baseChains[0];
 
 	return [
 		preferredChain,

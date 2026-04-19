@@ -136,11 +136,8 @@ for (const item of ["server.mjs", "dist", "public"]) {
 
 // Embed @cfxdevkit/dex-contracts as a local directory dependency
 const dexContractsDir = resolve(repoRoot, "packages", "contracts");
-// Build dist/ from generated/*.ts if needed (dist/ is gitignored, absent in CI)
-if (!existsSync(resolve(dexContractsDir, "dist", "index.js"))) {
-	console.log("  Building dex-contracts (tsc)...");
-	run("npx", ["tsc", "-p", "tsconfig.json"], dexContractsDir);
-}
+console.log("  Building dex-contracts from source...");
+run("pnpm", ["run", "build"], dexContractsDir);
 cpSync(dexContractsDir, resolve(dexUiPackDir, "dex-contracts"), {
 	recursive: true,
 });
